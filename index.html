@@ -1,0 +1,3459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>MyOS</title>
+    <style>
+        :root {
+            --win: #ffffff;
+            --bar: #f1f3f4;
+            --text: #202124;
+            --sub: #5f6368;
+            --line: #dadce0;
+            --shelf: rgba(248,249,250,.78);
+            --panel: #f8f9fa;
+            --hover: rgba(60,64,67,.1);
+            --accent: #1a73e8;
+            --accent-bg: #e8f0fe;
+            --chip: #e8eaed;
+        }
+
+        [data-theme="dark"] {
+            --win: #202124;
+            --bar: #2d2e31;
+            --text: #e8eaed;
+            --sub: #9aa0a6;
+            --line: #3c4043;
+            --shelf: rgba(32,33,36,.8);
+            --panel: #2d2e31;
+            --hover: rgba(232,234,237,.1);
+            --accent: #8ab4f8;
+            --accent-bg: #394457;
+            --chip: #3c4043;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        \n body, body button, body a, body .fr, body .lapp, body .sb {
+            cursor: var(--os-cursor,auto)
+        }
+
+        \n input, textarea, [contenteditable="true"] {
+            cursor: text
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden
+        }
+
+        body {
+            font-family: "Google Sans","Roboto","Segoe UI",system-ui,-apple-system,sans-serif;
+            font-size: 14px;
+            color: var(--text);
+            background: #111;
+            user-select: none;
+            -webkit-user-select: none
+        }
+
+        button {
+            font: inherit;
+            color: inherit;
+            background: none;
+            border: 0;
+            cursor: pointer
+        }
+
+        input, textarea {
+            font: inherit;
+            color: inherit
+        }
+
+        svg {
+            display: block
+        }
+
+        #wall {
+            position: fixed;
+            inset: 0;
+            background-size: cover;
+            background-position: center
+        }
+
+        #wins {
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 56px
+        }
+
+        #dim {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 99999
+        }
+
+        /* windows */
+        .win {
+            position: absolute;
+            background: var(--win);
+            color: var(--text);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 340px;
+            min-height: 240px;
+            box-shadow: 0 0 0 1px rgba(0,0,0,.14),0 10px 34px rgba(0,0,0,.3);
+            animation: pop .13s ease-out
+        }
+
+        @keyframes pop {
+            from {
+                opacity: 0;
+                transform: scale(.97)
+            }
+        }
+
+        .win.max {
+            border-radius: 0;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: 100% !important
+        }
+
+        .tb {
+            height: 40px;
+            flex: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 6px 0 12px;
+            background: var(--bar);
+            touch-action: none;
+            font-size: 13px
+        }
+
+        .win.inactive .tb {
+            opacity: .78
+        }
+
+        .tb .tic {
+            width: 18px;
+            height: 18px;
+            border-radius: 5px;
+            display: grid;
+            place-items: center;
+            flex: none
+        }
+
+            .tb .tic svg {
+                width: 12px;
+                height: 12px
+            }
+
+        .tb .t {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .wb {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            color: var(--sub)
+        }
+
+            .wb svg {
+                width: 14px;
+                height: 14px
+            }
+
+            .wb:hover {
+                background: var(--hover);
+                color: var(--text)
+            }
+
+            .wb.x:hover {
+                background: #d93025;
+                color: #fff
+            }
+
+        .wc {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            position: relative;
+            user-select: text;
+            -webkit-user-select: text
+        }
+
+        .rz {
+            position: absolute;
+            z-index: 5
+        }
+
+            .rz.r {
+                right: -3px;
+                top: 8px;
+                bottom: 8px;
+                width: 7px;
+                cursor: ew-resize
+            }
+
+            .rz.l {
+                left: -3px;
+                top: 8px;
+                bottom: 8px;
+                width: 7px;
+                cursor: ew-resize
+            }
+
+            .rz.b {
+                bottom: -3px;
+                left: 8px;
+                right: 8px;
+                height: 7px;
+                cursor: ns-resize
+            }
+
+            .rz.t {
+                top: -3px;
+                left: 8px;
+                right: 8px;
+                height: 7px;
+                cursor: ns-resize
+            }
+
+            .rz.br {
+                right: -3px;
+                bottom: -3px;
+                width: 14px;
+                height: 14px;
+                cursor: nwse-resize
+            }
+
+            .rz.bl {
+                left: -3px;
+                bottom: -3px;
+                width: 14px;
+                height: 14px;
+                cursor: nesw-resize
+            }
+
+            .rz.tr {
+                right: -3px;
+                top: -3px;
+                width: 14px;
+                height: 14px;
+                cursor: nesw-resize
+            }
+
+            .rz.tl {
+                left: -3px;
+                top: -3px;
+                width: 14px;
+                height: 14px;
+                cursor: nwse-resize
+            }
+
+        .win.max .rz {
+            display: none
+        }
+
+        /* shelf */
+        #shelf {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 56px;
+            z-index: 9000;
+            background: var(--shelf);
+            backdrop-filter: blur(20px) saturate(1.5);
+            -webkit-backdrop-filter: blur(20px) saturate(1.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            border-top: 1px solid rgba(255,255,255,.18)
+        }
+
+        .sb {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            transition: background .12s
+        }
+
+            .sb:hover {
+                background: var(--hover)
+            }
+
+            .sb .run {
+                position: absolute;
+                bottom: 2px;
+                left: 50%;
+                width: 5px;
+                height: 5px;
+                margin-left: -2.5px;
+                border-radius: 50%;
+                background: var(--sub);
+                display: none
+            }
+
+            .sb.on .run {
+                display: block
+            }
+
+            .sb.act .run {
+                background: var(--accent);
+                width: 14px;
+                margin-left: -7px;
+                border-radius: 3px
+            }
+
+        .ic {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            flex: none
+        }
+
+            .ic svg {
+                width: 18px;
+                height: 18px;
+                fill: none;
+                stroke: #fff;
+                stroke-width: 1.8;
+                stroke-linecap: round;
+                stroke-linejoin: round
+            }
+
+        .ring {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2.5px solid var(--text);
+            opacity: .85
+        }
+
+        #tray {
+            position: absolute;
+            right: 8px;
+            top: 7px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 14px;
+            border-radius: 21px;
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 500
+        }
+
+            #tray:hover {
+                background: var(--hover)
+            }
+
+            #tray svg {
+                width: 17px;
+                height: 17px;
+                fill: none;
+                stroke: currentColor;
+                stroke-width: 1.8;
+                stroke-linecap: round;
+                stroke-linejoin: round
+            }
+
+        /* launcher */
+        #launcher {
+            position: fixed;
+            left: 12px;
+            bottom: 64px;
+            width: 580px;
+            height: 470px;
+            max-width: calc(100vw - 24px);
+            max-height: calc(100vh - 80px);
+            z-index: 9500;
+            background: var(--panel);
+            border-radius: 26px;
+            box-shadow: 0 0 0 1px rgba(0,0,0,.1),0 18px 50px rgba(0,0,0,.35);
+            display: none;
+            flex-direction: column;
+            padding: 18px 22px;
+            animation: pop .14s ease-out
+        }
+
+            #launcher.open {
+                display: flex
+            }
+
+        .lsearch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--chip);
+            border-radius: 24px;
+            height: 44px;
+            padding: 0 16px;
+            margin-bottom: 18px
+        }
+
+            .lsearch svg {
+                width: 18px;
+                height: 18px;
+                fill: none;
+                stroke: var(--sub);
+                stroke-width: 2;
+                stroke-linecap: round
+            }
+
+            .lsearch input {
+                flex: 1;
+                background: none;
+                border: 0;
+                outline: 0;
+                user-select: text
+            }
+
+        .lgrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill,minmax(96px,1fr));
+            gap: 8px;
+            overflow: auto
+        }
+
+        .lapp {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 4px;
+            border-radius: 14px;
+            font-size: 12.5px;
+            text-align: center
+        }
+
+            .lapp:hover {
+                background: var(--hover)
+            }
+
+            .lapp .ic {
+                width: 52px;
+                height: 52px
+            }
+
+                .lapp .ic svg {
+                    width: 26px;
+                    height: 26px
+                }
+
+        /* quick settings */
+        #qs {
+            position: fixed;
+            right: 10px;
+            bottom: 64px;
+            width: 360px;
+            max-width: calc(100vw - 20px);
+            z-index: 9500;
+            background: var(--panel);
+            border-radius: 26px;
+            padding: 16px;
+            box-shadow: 0 0 0 1px rgba(0,0,0,.1),0 18px 50px rgba(0,0,0,.35);
+            display: none;
+            animation: pop .14s ease-out
+        }
+
+            #qs.open {
+                display: block
+            }
+
+        .qhead {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 2px 6px 12px
+        }
+
+            .qhead b {
+                font-size: 22px;
+                font-weight: 500
+            }
+
+            .qhead span {
+                color: var(--sub);
+                font-size: 13px
+            }
+
+        .qtiles {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 14px
+        }
+
+        .qt {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            height: 56px;
+            padding: 0 14px;
+            border-radius: 28px;
+            background: var(--chip);
+            text-align: left
+        }
+
+            .qt.on {
+                background: var(--accent);
+                color: #fff
+            }
+
+        [data-theme="dark"] .qt.on {
+            color: #202124
+        }
+
+        .qt svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.9;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex: none
+        }
+
+        .qt small {
+            display: block;
+            font-size: 11.5px;
+            opacity: .8
+        }
+
+        .qs-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 8px
+        }
+
+            .qs-row svg {
+                width: 20px;
+                height: 20px;
+                fill: none;
+                stroke: var(--sub);
+                stroke-width: 1.9;
+                stroke-linecap: round;
+                stroke-linejoin: round
+            }
+
+        input[type=range] {
+            flex: 1;
+            accent-color: var(--accent)
+        }
+
+        .qfoot {
+            display: flex;
+            justify-content: space-between;
+            color: var(--sub);
+            font-size: 12.5px;
+            padding: 12px 8px 0
+        }
+
+        /* boot */
+        #boot {
+            position: fixed;
+            inset: 0;
+            background: #0b0c0f;
+            z-index: 200000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 26px;
+            color: #e8eaed;
+            transition: opacity .5s
+        }
+
+            #boot.gone {
+                opacity: 0;
+                pointer-events: none
+            }
+
+            #boot h1 {
+                font-weight: 400;
+                font-size: 30px;
+                letter-spacing: .04em
+            }
+
+        .spin {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 3px solid #3c4043;
+            border-top-color: #8ab4f8;
+            animation: sp .8s linear infinite
+        }
+
+        @keyframes sp {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        /* in-app dialog */
+        .dlg-b {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,.32);
+            display: grid;
+            place-items: center;
+            z-index: 20
+        }
+
+        .dlg {
+            background: var(--win);
+            border-radius: 16px;
+            padding: 20px;
+            width: min(340px,90%);
+            box-shadow: 0 10px 30px rgba(0,0,0,.35)
+        }
+
+            .dlg h4 {
+                font-weight: 500;
+                font-size: 16px;
+                margin-bottom: 12px
+            }
+
+            .dlg input {
+                width: 100%;
+                padding: 9px 12px;
+                border-radius: 8px;
+                border: 1px solid var(--line);
+                background: var(--win);
+                outline: 0;
+                margin-bottom: 16px
+            }
+
+                .dlg input:focus {
+                    border-color: var(--accent)
+                }
+
+            .dlg .row {
+                display: flex;
+                justify-content: flex-end;
+                gap: 8px
+            }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 18px;
+            font-weight: 500;
+            color: var(--accent)
+        }
+
+            .btn:hover {
+                background: var(--accent-bg)
+            }
+
+            .btn.fill {
+                background: var(--accent);
+                color: #fff
+            }
+
+        [data-theme="dark"] .btn.fill {
+            color: #202124
+        }
+
+        .btn.fill:hover {
+            filter: brightness(.95);
+            background: var(--accent)
+        }
+
+        /* Newspedia */
+        .np {
+            display: flex;
+            flex-direction: column;
+            height: 100%
+        }
+
+        .np-top {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--line);
+            flex: none
+        }
+
+        .np-tabs {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            flex: 1;
+            scrollbar-width: none
+        }
+
+            .np-tabs::-webkit-scrollbar {
+                display: none
+            }
+
+        .chip {
+            padding: 6px 13px;
+            border-radius: 16px;
+            background: var(--chip);
+            white-space: nowrap;
+            font-size: 13px
+        }
+
+            .chip.on {
+                background: var(--accent-bg);
+                color: var(--accent);
+                font-weight: 500
+            }
+
+        .np-q {
+            width: 170px;
+            padding: 7px 12px;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: var(--win);
+            outline: 0
+        }
+
+            .np-q:focus {
+                border-color: var(--accent)
+            }
+
+        .np-r {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            flex: none
+        }
+
+            .np-r:hover {
+                background: var(--hover)
+            }
+
+            .np-r svg {
+                width: 17px;
+                height: 17px;
+                fill: none;
+                stroke: currentColor;
+                stroke-width: 2;
+                stroke-linecap: round;
+                stroke-linejoin: round
+            }
+
+            .np-r.busy svg {
+                animation: sp 1s linear infinite
+            }
+
+        .np-st {
+            padding: 8px 16px 0;
+            color: var(--sub);
+            font-size: 12px;
+            flex: none
+        }
+
+        .np-list {
+            flex: 1;
+            overflow: auto;
+            padding: 12px 14px 16px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill,minmax(240px,1fr));
+            gap: 12px;
+            align-content: start
+        }
+
+        .nc {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            background: var(--win)
+        }
+
+            .nc:hover {
+                background: var(--bar)
+            }
+
+            .nc .im {
+                aspect-ratio: 16/9;
+                background: var(--chip);
+                overflow: hidden
+            }
+
+                .nc .im img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    display: block
+                }
+
+            .nc .bd {
+                padding: 10px 12px 12px
+            }
+
+            .nc .mt {
+                font-size: 11.5px;
+                color: var(--sub);
+                margin-bottom: 4px
+            }
+
+            .nc h4 {
+                font-weight: 500;
+                font-size: 14px;
+                line-height: 1.35
+            }
+
+            .nc p {
+                font-size: 12.5px;
+                color: var(--sub);
+                margin-top: 5px;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden
+            }
+
+        .np-empty {
+            grid-column: 1/-1;
+            text-align: center;
+            color: var(--sub);
+            padding: 50px 0
+        }
+
+        /* Files */
+        .fm {
+            display: flex;
+            flex-direction: column;
+            height: 100%
+        }
+
+        .fm-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--line);
+            flex: none
+        }
+
+        .fm-path {
+            flex: 1;
+            padding: 6px 12px;
+            border-radius: 16px;
+            background: var(--chip);
+            font-size: 13px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .fm-list {
+            flex: 1;
+            overflow: auto
+        }
+
+        .fr {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--line);
+            cursor: default
+        }
+
+            .fr:hover {
+                background: var(--hover)
+            }
+
+            .fr.sel {
+                background: var(--accent-bg)
+            }
+
+            .fr svg {
+                width: 20px;
+                height: 20px;
+                fill: none;
+                stroke: var(--sub);
+                stroke-width: 1.7;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+                flex: none
+            }
+
+            .fr.d svg {
+                stroke: var(--accent)
+            }
+
+            .fr .n {
+                flex: 1
+            }
+
+            .fr .s {
+                color: var(--sub);
+                font-size: 12.5px;
+                width: 80px;
+                text-align: right
+            }
+
+        .sbtn {
+            height: 32px;
+            padding: 0 12px;
+            border-radius: 16px;
+            font-size: 13px;
+            color: var(--text)
+        }
+
+            .sbtn:hover {
+                background: var(--hover)
+            }
+
+            .sbtn:disabled {
+                opacity: .4;
+                pointer-events: none
+            }
+
+        /* Text */
+        .tx {
+            display: flex;
+            flex-direction: column;
+            height: 100%
+        }
+
+            .tx textarea {
+                flex: 1;
+                border: 0;
+                outline: 0;
+                resize: none;
+                padding: 14px 16px;
+                background: var(--win);
+                font-family: "Roboto Mono",ui-monospace,Menlo,Consolas,monospace;
+                font-size: 13.5px;
+                line-height: 1.55;
+                tab-size: 2
+            }
+
+        /* Terminal */
+        .tm {
+            background: #1a1b1e;
+            color: #e6e6e6;
+            height: 100%;
+            padding: 10px 12px;
+            overflow: auto;
+            font-family: "Roboto Mono",ui-monospace,Menlo,Consolas,monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            cursor: text
+        }
+
+            .tm .ln {
+                white-space: pre-wrap;
+                word-break: break-word
+            }
+
+            .tm .pr {
+                color: #8ab4f8
+            }
+
+            .tm .in {
+                display: flex;
+                gap: 8px
+            }
+
+            .tm input {
+                flex: 1;
+                background: none;
+                border: 0;
+                outline: 0;
+                color: inherit;
+                font: inherit
+            }
+
+        /* Settings */
+        .st {
+            display: flex;
+            height: 100%
+        }
+
+        .st-nav {
+            width: 190px;
+            border-right: 1px solid var(--line);
+            padding: 10px 8px;
+            flex: none
+        }
+
+            .st-nav button {
+                display: block;
+                width: 100%;
+                text-align: left;
+                padding: 10px 14px;
+                border-radius: 20px;
+                margin-bottom: 2px
+            }
+
+                .st-nav button:hover {
+                    background: var(--hover)
+                }
+
+                .st-nav button.on {
+                    background: var(--accent-bg);
+                    color: var(--accent);
+                    font-weight: 500
+                }
+
+        .st-main {
+            flex: 1;
+            padding: 20px 26px;
+            overflow: auto
+        }
+
+            .st-main h3 {
+                font-weight: 500;
+                font-size: 18px;
+                margin-bottom: 16px
+            }
+
+            .st-main h5 {
+                font-weight: 500;
+                font-size: 13px;
+                color: var(--sub);
+                margin: 20px 0 10px
+            }
+
+        .seg {
+            display: inline-flex;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            overflow: hidden
+        }
+
+            .seg button {
+                padding: 8px 20px
+            }
+
+                .seg button.on {
+                    background: var(--accent-bg);
+                    color: var(--accent);
+                    font-weight: 500
+                }
+
+        .walls {
+            display: grid;
+            grid-template-columns: repeat(auto-fill,minmax(130px,1fr));
+            gap: 10px
+        }
+
+            .walls button {
+                aspect-ratio: 16/10;
+                border-radius: 10px;
+                background-size: cover;
+                background-position: center;
+                border: 2px solid transparent;
+                outline: 1px solid var(--line)
+            }
+
+                .walls button.on {
+                    border-color: var(--accent)
+                }
+
+        .kv {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 8px 12px;
+            font-size: 13.5px
+        }
+
+            .kv span:nth-child(odd) {
+                color: var(--sub)
+            }
+
+
+        /* Update log + app store */
+        .store {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden
+        }
+
+        .store-head {
+            padding: 18px 20px 12px;
+            border-bottom: 1px solid var(--line);
+            flex: none
+        }
+
+            .store-head h2 {
+                font-size: 22px;
+                font-weight: 500;
+                margin-bottom: 5px
+            }
+
+            .store-head p {
+                color: var(--sub);
+                font-size: 13px
+            }
+
+        .store-list {
+            padding: 14px 18px;
+            overflow: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill,minmax(230px,1fr));
+            gap: 12px;
+            align-content: start
+        }
+
+        .store-card {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            min-width: 0
+        }
+
+            .store-card .meta {
+                flex: 1;
+                min-width: 0
+            }
+
+            .store-card b {
+                display: block;
+                font-weight: 500
+            }
+
+            .store-card small {
+                display: block;
+                color: var(--sub);
+                margin-top: 4px;
+                line-height: 1.4
+            }
+
+            .store-card button {
+                padding: 7px 13px;
+                border-radius: 18px;
+                background: var(--accent-bg);
+                color: var(--accent);
+                font-weight: 500
+            }
+
+                .store-card button:disabled {
+                    opacity: .5
+                }
+
+        .store-tabs {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px
+        }
+
+            .store-tabs button {
+                padding: 7px 13px;
+                border-radius: 18px;
+                background: var(--chip)
+            }
+
+                .store-tabs button.on {
+                    background: var(--accent-bg);
+                    color: var(--accent)
+                }
+
+        .builder {
+            padding: 16px 18px;
+            overflow: auto
+        }
+
+            .builder label {
+                display: block;
+                font-size: 12px;
+                color: var(--sub);
+                margin: 10px 0 5px
+            }
+
+            .builder input, .builder textarea {
+                width: 100%;
+                padding: 9px 11px;
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: var(--win);
+                outline: 0;
+                user-select: text
+            }
+
+            .builder textarea {
+                min-height: 150px;
+                resize: vertical;
+                font: 12px/1.5 ui-monospace,monospace
+            }
+
+            .builder .file-editor {
+                border: 1px solid var(--line);
+                border-radius: 10px;
+                padding: 10px;
+                margin: 10px 0
+            }
+
+                .builder .file-editor textarea {
+                    min-height: 115px
+                }
+
+            .builder .actions {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                margin-top: 12px
+            }
+
+        .update-list {
+            padding: 18px 22px;
+            overflow: auto
+        }
+
+        .update-item {
+            padding: 0 0 18px 18px;
+            margin: 0 0 18px;
+            border-left: 2px solid var(--accent);
+            position: relative
+        }
+
+            .update-item:before {
+                content: "";
+                position: absolute;
+                left: -6px;
+                top: 2px;
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: var(--accent)
+            }
+
+            .update-item b {
+                font-weight: 600
+            }
+
+            .update-item small {
+                display: block;
+                color: var(--sub);
+                margin: 4px 0 8px
+            }
+
+            .update-item ul {
+                padding-left: 18px;
+                line-height: 1.7
+            }
+
+        @media(max-width:700px) {
+            .win {
+                min-width: 0
+            }
+
+            .st-nav {
+                width: 120px
+            }
+
+            .np-q {
+                width: 100px
+            }
+        }
+
+        /* ================= MOTION ================= */
+        :root {
+            --ease: cubic-bezier(.2,.8,.2,1)
+        }
+
+        #wall {
+            background: #111
+        }
+
+            #wall .wl {
+                position: absolute;
+                inset: 0;
+                background-size: cover;
+                background-position: center;
+                transition: opacity .8s ease
+            }
+
+        .win {
+            animation: winIn .26s var(--ease);
+            transition: background-color .3s,box-shadow .25s
+        }
+
+            .win.ready {
+                animation: none
+            }
+
+            .win.inactive {
+                box-shadow: 0 0 0 1px rgba(0,0,0,.12),0 4px 14px rgba(0,0,0,.2)
+            }
+
+            .win.anim {
+                transition: background-color .3s,box-shadow .25s,left .26s var(--ease),top .26s var(--ease),width .26s var(--ease),height .26s var(--ease),border-radius .26s
+            }
+
+            .win.closing {
+                animation: winOut .17s ease-in forwards;
+                pointer-events: none
+            }
+
+        @keyframes winIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px) scale(.96)
+            }
+        }
+
+        @keyframes winOut {
+            to {
+                opacity: 0;
+                transform: scale(.95)
+            }
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(10px)
+            }
+        }
+
+        @keyframes fade {
+            from {
+                opacity: 0
+            }
+        }
+
+        .wc, #shelf, #launcher, #qs, .chip, .np-top, .fm-bar, .st-nav {
+            transition: background-color .3s,color .3s,border-color .3s
+        }
+
+        .tb {
+            transition: background-color .3s,opacity .2s
+        }
+
+        /* launcher + quick settings slide in/out */
+        #launcher, #qs {
+            animation: none;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translateY(18px) scale(.97);
+            transform-origin: bottom left;
+            transition: opacity .2s,transform .26s var(--ease),visibility 0s .26s,background-color .3s
+        }
+
+        #qs {
+            display: block;
+            transform-origin: bottom right
+        }
+
+            #launcher.open, #qs.open {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+                transform: none;
+                transition: opacity .2s,transform .28s var(--ease),visibility 0s,background-color .3s
+            }
+
+                #launcher.open .lsearch {
+                    animation: rise .3s var(--ease) both
+                }
+
+                #launcher.open .lapp {
+                    animation: rise .32s var(--ease) both;
+                    animation-delay: calc(var(--i,0)*24ms + 60ms)
+                }
+
+        #lgrid.noanim .lapp {
+            animation: none !important
+        }
+
+        .lapp {
+            transition: background-color .15s,transform .12s
+        }
+
+            .lapp:active {
+                transform: scale(.95)
+            }
+
+        #qs.open .qt {
+            animation: rise .3s var(--ease) both
+        }
+
+            #qs.open .qt:nth-child(2) {
+                animation-delay: .04s
+            }
+
+            #qs.open .qt:nth-child(3) {
+                animation-delay: .08s
+            }
+
+            #qs.open .qt:nth-child(4) {
+                animation-delay: .12s
+            }
+
+        .qt {
+            transition: background-color .2s,color .2s,transform .12s
+        }
+
+            .qt:active {
+                transform: scale(.96)
+            }
+
+        /* shelf */
+        #shelf {
+            animation: shelfIn .6s 1.3s var(--ease) both
+        }
+
+        @keyframes shelfIn {
+            from {
+                transform: translateY(100%);
+                opacity: 0
+            }
+        }
+
+        .sb {
+            transition: background-color .15s,transform .16s var(--ease)
+        }
+
+            .sb:hover {
+                transform: translateY(-2px)
+            }
+
+            .sb:active {
+                transform: scale(.9)
+            }
+
+            .sb.enter {
+                animation: sbIn .38s var(--ease)
+            }
+
+        @keyframes sbIn {
+            from {
+                opacity: 0;
+                transform: scale(.4)
+            }
+        }
+
+        .sb.leaving {
+            pointer-events: none;
+            animation: sbOut .2s ease-in forwards
+        }
+
+        @keyframes sbOut {
+            to {
+                opacity: 0;
+                transform: scale(.4)
+            }
+        }
+
+        .sb.bounce .ic {
+            animation: bounce .55s var(--ease)
+        }
+
+        @keyframes bounce {
+            0% {
+                transform: none
+            }
+
+            35% {
+                transform: translateY(-12px)
+            }
+
+            65% {
+                transform: none
+            }
+
+            82% {
+                transform: translateY(-4px)
+            }
+
+            100% {
+                transform: none
+            }
+        }
+
+        .sb .run {
+            display: block;
+            opacity: 0;
+            transform: scale(.3);
+            transition: opacity .2s,transform .2s,width .22s var(--ease),margin-left .22s var(--ease),background-color .2s
+        }
+
+        .sb.on .run {
+            opacity: 1;
+            transform: none
+        }
+
+        /* boot */
+        #boot {
+            transition: opacity .5s,transform .6s
+        }
+
+            #boot.gone {
+                opacity: 0;
+                transform: scale(1.06)
+            }
+
+            #boot h1 {
+                animation: bootIn .9s var(--ease) both
+            }
+
+        @keyframes bootIn {
+            from {
+                opacity: 0;
+                letter-spacing: .3em
+            }
+        }
+
+        #boot .bar {
+            width: 160px;
+            height: 3px;
+            border-radius: 2px;
+            background: #2b2d31;
+            overflow: hidden
+        }
+
+            #boot .bar i {
+                display: block;
+                height: 100%;
+                background: #8ab4f8;
+                transform-origin: left;
+                animation: loadbar 1.5s cubic-bezier(.5,0,.2,1) both
+            }
+
+        @keyframes loadbar {
+            from {
+                transform: scaleX(0)
+            }
+        }
+
+        /* app content */
+        .np-list.in .nc {
+            animation: rise .38s var(--ease) both;
+            animation-delay: calc(var(--i,0)*28ms)
+        }
+
+        .nc {
+            transition: background-color .15s,transform .15s var(--ease),box-shadow .2s
+        }
+
+            .nc:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 18px rgba(0,0,0,.14)
+            }
+
+        .chip {
+            transition: background-color .2s,color .2s
+        }
+
+        .fr {
+            animation: rise .25s var(--ease) both;
+            animation-delay: calc(var(--i,0)*16ms)
+        }
+
+        .seg button, .walls button, .btn, .sbtn, .wb {
+            transition: background-color .2s,color .2s,transform .15s
+        }
+
+            .walls button:hover {
+                transform: scale(1.04)
+            }
+
+        .dlg-b {
+            animation: fade .15s
+        }
+
+        .dlg {
+            animation: winIn .22s var(--ease)
+        }
+
+        #toast {
+            position: fixed;
+            left: 50%;
+            bottom: 72px;
+            transform: translate(-50%,20px);
+            background: #323336;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-size: 13.5px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s,transform .28s var(--ease);
+            z-index: 99000
+        }
+
+            #toast.show {
+                opacity: 1;
+                transform: translate(-50%,0)
+            }
+
+        /* app glyph fallback letter */
+        .gl {
+            color: #fff;
+            font-weight: 500;
+            font-size: 16px;
+            line-height: 1
+        }
+
+        .lapp .ic .gl {
+            font-size: 24px
+        }
+
+        /* settings > apps */
+        .arow {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--line)
+        }
+
+            .arow .an {
+                flex: 1
+            }
+
+            .arow small {
+                display: block;
+                color: var(--sub);
+                font-size: 12px
+            }
+
+            .arow .ic {
+                width: 34px;
+                height: 34px
+            }
+
+                .arow .ic svg {
+                    width: 18px;
+                    height: 18px
+                }
+
+        .sw {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            color: var(--sub);
+            font-size: 13px;
+            cursor: pointer
+        }
+
+        .addrow {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap
+        }
+
+            .addrow input {
+                flex: 1;
+                min-width: 130px;
+                padding: 9px 12px;
+                border-radius: 8px;
+                border: 1px solid var(--line);
+                background: var(--win);
+                outline: 0
+            }
+
+                .addrow input:focus {
+                    border-color: var(--accent)
+                }
+
+        .hint {
+            margin-top: 14px;
+            color: var(--sub);
+            font-size: 12.5px;
+            line-height: 1.5
+        }
+
+        /* web app window */
+        .web {
+            display: flex;
+            flex-direction: column
+        }
+
+            .web iframe {
+                flex: 1;
+                width: 100%;
+                border: 0;
+                background: #fff
+            }
+
+        /* calculator */
+        .calc {
+            display: flex;
+            flex-direction: column;
+            background: var(--win)
+        }
+
+            .calc:focus {
+                outline: 0
+            }
+
+            .calc .cd {
+                padding: 18px 20px 6px;
+                text-align: right
+            }
+
+                .calc .cd small {
+                    display: block;
+                    height: 18px;
+                    color: var(--sub);
+                    font-size: 13px
+                }
+
+            .calc .cv {
+                font-size: 42px;
+                font-weight: 300;
+                white-space: nowrap;
+                overflow: hidden;
+                transition: font-size .15s
+            }
+
+            .calc .ck {
+                flex: 1;
+                display: grid;
+                grid-template-columns: repeat(4,1fr);
+                gap: 8px;
+                padding: 12px
+            }
+
+                .calc .ck button {
+                    border-radius: 16px;
+                    background: var(--chip);
+                    font-size: 20px;
+                    transition: transform .08s,filter .15s,background-color .2s
+                }
+
+                    .calc .ck button:hover {
+                        filter: brightness(.96)
+                    }
+
+                    .calc .ck button:active {
+                        transform: scale(.92)
+                    }
+
+                .calc .ck .op {
+                    background: var(--accent-bg);
+                    color: var(--accent)
+                }
+
+                .calc .ck .eq {
+                    background: var(--accent);
+                    color: #fff
+                }
+
+        @media (prefers-reduced-motion:reduce) {
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                animation-delay: 0s !important;
+                transition-duration: .01ms !important
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div id="wall"></div>
+    <div id="wins"></div>
+    <div id="dim"></div>
+
+    <div id="launcher">
+        <label class="lsearch">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+            <input id="lq" placeholder="Search your device, apps, and more" autocomplete="off">
+        </label>
+        <div class="lgrid" id="lgrid"></div>
+    </div>
+
+    <div id="qs">
+        <div class="qhead"><b id="qtime"></b><span id="qdate"></span></div>
+        <div class="qtiles">
+            <button class="qt on" data-q="wifi"><svg viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0" /><circle cx="12" cy="19.5" r=".8" /></svg><div>Wi-Fi<small>Connected</small></div></button>
+            <button class="qt" data-q="dark"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg><div>Dark theme<small id="qdarkS">Off</small></div></button>
+            <button class="qt" data-q="dnd"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M8 12h8" /></svg><div>Do not disturb<small>Off</small></div></button>
+            <button class="qt" data-q="night"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19" /></svg><div>Night light<small>Off</small></div></button>
+        </div>
+        <div class="qs-row"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2" /></svg><input type="range" id="bright" min="0" max="60" value="0"></div>
+        <div class="qs-row"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z" /><path d="M16.5 8.5a5 5 0 0 1 0 7" /></svg><input type="range" id="vol" min="0" max="100" value="60"></div>
+        <div class="qfoot"><span id="qbat">Battery 100%</span><span>user@MyOS</span></div>
+    </div>
+
+    <div id="shelf"></div>
+    <div id="toast"></div>
+
+    <div id="boot"><h1>MyOS</h1><div class="bar"><i></i></div></div>
+
+    <script>
+        (function () {
+            "use strict";
+            function bootDebug(message) {
+                var el = document.getElementById("boot-debug");
+                if (el) el.textContent = message;
+            }
+
+            window.addEventListener("error", function (e) {
+                bootDebug("ERROR: " + (e.message || "Unknown error") +
+                    (e.lineno ? " (line " + e.lineno + ")" : ""));
+            });
+
+            window.addEventListener("unhandledrejection", function (e) {
+                var reason = e.reason;
+                bootDebug("PROMISE ERROR: " +
+                    (reason && reason.message ? reason.message : String(reason)));
+            });
+
+            /* ---------------------------------------------------------------
+               HOW TO ADD AN APP
+               1. Search this file for:  ADD YOUR APPS HERE
+               2. Copy the Calculator block, change id / name / color / icon / open()
+               3. Save and reload. It shows up in the launcher (and on the shelf if pinned:true)
+               No-code option: Settings > Apps > "Add a web app"
+               --------------------------------------------------------------- */
+            var $ = function (s, r) { return (r || document).querySelector(s) };
+            function load(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d } catch (e) { return d } }
+            function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)) } catch (e) { } }
+            function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] }) }
+            function strip(h) { var d = document.createElement("div"); d.innerHTML = h || ""; return (d.textContent || "").trim() }
+
+            /* ---------------- Settings / wallpapers ---------------- */
+            function svgBg(inner) {
+                var s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">' + inner + '</svg>';
+                return 'url("data:image/svg+xml;utf8,' + encodeURIComponent(s) + '")';
+            }
+            var WALLS = {
+                dunes: svgBg('<rect width="1600" height="900" fill="#f1d7b0"/><circle cx="1180" cy="250" r="105" fill="#faeccd"/>' +
+                    '<path d="M0 560C300 480 520 640 800 560S1300 460 1600 540V900H0Z" fill="#e6b57a"/>' +
+                    '<path d="M0 680C260 620 560 740 860 670S1360 600 1600 660V900H0Z" fill="#d1955a"/>' +
+                    '<path d="M0 790C300 740 600 840 900 790S1400 730 1600 780V900H0Z" fill="#b2733f"/>'),
+                ridge: svgBg('<rect width="1600" height="900" fill="#cbe0f2"/><circle cx="400" cy="230" r="90" fill="#eef6fc"/>' +
+                    '<path d="M0 520L180 420L360 500L600 360L840 490L1080 380L1340 500L1600 410V900H0Z" fill="#9dbfd9"/>' +
+                    '<path d="M0 620L220 540L460 640L720 520L980 650L1240 560L1600 640V900H0Z" fill="#6f9cb8"/>' +
+                    '<path d="M0 740C280 680 520 780 820 730S1340 690 1600 740V900H0Z" fill="#3f6f7f"/>'),
+                night: svgBg('<rect width="1600" height="900" fill="#0f1724"/><circle cx="1240" cy="210" r="70" fill="#dfe6f2" opacity=".92"/>' +
+                    '<path d="M0 600L240 500L520 620L820 480L1120 610L1380 520L1600 600V900H0Z" fill="#1a2a42"/>' +
+                    '<path d="M0 720C300 660 560 760 860 710S1360 670 1600 720V900H0Z" fill="#121e31"/>' +
+                    '<path d="M0 820C320 780 600 850 900 815S1400 790 1600 820V900H0Z" fill="#0b1422"/>')
+            };
+            var cfg = Object.assign(
+                { theme: "light", wall: "dunes", cursor: "default" },
+                load("an_cfg", {}) || {}
+            );
+            var shownWall = null;
+            function setWall() {
+                var key = WALLS[cfg.wall] ? cfg.wall : "dunes";
+                if (key === shownWall) return;
+                shownWall = key;
+                var box = $("#wall"), n = document.createElement("div");
+                n.className = "wl"; n.style.backgroundImage = WALLS[key]; n.style.opacity = "0";
+                box.appendChild(n); void n.offsetWidth; n.style.opacity = "1";
+                setTimeout(function () { while (box.children.length > 1) box.removeChild(box.firstChild) }, 900);
+            }
+            function applyCfg() {
+                document.body.setAttribute("data-theme", cfg.theme);
+                setWall();
+                var cursors = {
+                    default: "auto",
+                    pointer: "pointer",
+                    crosshair: "crosshair",
+                    grab: "grab",
+                    help: "help",
+                    text: "text",
+                    cell: "cell",
+                    wait: "wait",
+                    notAllowed: "not-allowed",
+                    pencil: 'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M5 23 21 7l5 5L10 28H5z" fill="#ffd54f" stroke="#202124" stroke-width="1.8"/><path d="m19 9 5 5" stroke="#202124" stroke-width="1.8"/></svg>') + '") 2 28, crosshair',
+                    neon: 'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M3 2v23l6-6 4 10 5-2-4-10h9z" fill="#7cf7ff" stroke="#092b3b" stroke-width="1.8" stroke-linejoin="round"/></svg>') + '") 3 2, auto'
+                };
+                document.documentElement.style.setProperty("--os-cursor", cursors[cfg.cursor] || "auto");
+                var qd = $("#qdarkS"); if (qd) qd.textContent = cfg.theme === "dark" ? "On" : "Off";
+                var b = $('[data-q="dark"]'); if (b) b.classList.toggle("on", cfg.theme === "dark");
+                save("an_cfg", cfg);
+            }
+
+            /* ---------------- Virtual filesystem ---------------- */
+            var FS = load("an_fs", null) || {
+                "/": { t: "d" }, "/home": { t: "d" }, "/home/user": { t: "d" },
+                "/home/user/Documents": { t: "d" }, "/home/user/Downloads": { t: "d" }, "/home/user/Pictures": { t: "d" }, "/home/user/Apps": { t: "d" },
+                "/home/user/Documents/welcome.txt": { t: "f", c: "Welcome to MyOS.\n\nThis is a browser-based desktop. Files you create here are kept in your browser's local storage.\n\nOpen Newspedia from the shelf to read the latest headlines." }
+            };
+            function saveFS() { save("an_fs", FS) }
+            function base(p) { return p.split("/").pop() || "/" }
+            function dirOf(p) { var i = p.lastIndexOf("/"); return i <= 0 ? "/" : p.slice(0, i) }
+            function join(a, b) { return a === "/" ? "/" + b : a + "/" + b }
+            function kids(p) {
+                var pre = p === "/" ? "/" : p + "/";
+                return Object.keys(FS).filter(function (k) { return k !== p && k.indexOf(pre) === 0 && k.slice(pre.length).indexOf("/") === -1 })
+                    .sort(function (a, b) { var da = FS[a].t === "d", db = FS[b].t === "d"; return da !== db ? (da ? -1 : 1) : base(a).localeCompare(base(b)) });
+            }
+            function resolve(cwd, p) {
+                if (!p) return cwd;
+                if (p[0] === "~") p = "/home/user" + p.slice(1);
+                var parts = (p[0] === "/" ? p : cwd + "/" + p).split("/"), out = [];
+                parts.forEach(function (s) { if (!s || s === ".") return; if (s === "..") out.pop(); else out.push(s) });
+                return "/" + out.join("/");
+            }
+            function rmTree(p) { Object.keys(FS).forEach(function (k) { if (k === p || k.indexOf(p + "/") === 0) delete FS[k] }); saveFS() }
+            function bytes(n) { return n < 1024 ? n + " B" : (n / 1024).toFixed(1) + " KB" }
+
+            /* =====================================================================
+               APP REGISTRY
+               Every app is just an object passed to register(). The window manager,
+               launcher, shelf and Settings > Apps all read from this one list.
+               ===================================================================== */
+            var G = {
+                news: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>',
+                files: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+                text: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+                term: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/>',
+                gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>'
+            };
+            var APPS = [], APP = {}, booted = false, bounceId = null;
+
+            function glyph(a) {
+                if (a.g) return '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + a.g + '</svg>';
+                return '<b class="gl">' + esc((a.name || "?").charAt(0).toUpperCase()) + '</b>';
+            }
+            function icHtml(a) { return '<span class="ic" style="background:' + esc(a.color) + '">' + glyph(a) + '</span>' }
+            function isPinned(a) { return (a.pinned && (cfg.unpin || []).indexOf(a.id) < 0) || (cfg.pin || []).indexOf(a.id) > -1 }
+            function setPinned(id, on) {
+                var a = APP[id]; if (!a) return;
+                cfg.pin = (cfg.pin || []).filter(function (x) { return x !== id });
+                cfg.unpin = (cfg.unpin || []).filter(function (x) { return x !== id });
+                if (on && !a.pinned) cfg.pin.push(id);
+                if (!on && a.pinned) cfg.unpin.push(id);
+                save("an_cfg", cfg); renderShelf();
+            }
+
+            function register(def) {
+                if (!def || !def.id || typeof def.open !== "function") throw new Error("register() needs at least {id, open}");
+                var a = {
+                    id: String(def.id), name: def.name || def.id, color: def.color || "#5f6368", g: def.icon || null,
+                    w: def.w || 640, h: def.h || 460, pinned: !!def.pinned, open: def.open, custom: !!def.custom
+                };
+                if (APP[a.id]) APPS.splice(APPS.indexOf(APP[a.id]), 1);
+                APPS.push(a); APP[a.id] = a;
+                if (booted) { renderShelf(); buildLauncher($("#lq").value) }
+                return a;
+            }
+            function unregister(id) {
+                if (wins[id]) closeWin(wins[id]);
+                var a = APP[id]; if (a) { APPS.splice(APPS.indexOf(a), 1); delete APP[id] }
+                if (booted) { renderShelf(); buildLauncher($("#lq").value) }
+            }
+
+            /* web apps: an app that is just a website shown in a window */
+            function openWeb(win, url) {
+                var r = win.body; r.className = "wc web";
+                r.innerHTML = '<div class="fm-bar"><button class="sbtn" data-a="rl">Reload</button><div class="fm-path"></div>' +
+                    '<a class="sbtn" target="_blank" rel="noopener" style="display:grid;place-items:center;text-decoration:none">Open in new tab</a></div>' +
+                    '<iframe sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads" referrerpolicy="no-referrer"></iframe>';
+                var fr = $("iframe", r); $(".fm-path", r).textContent = url; $("a", r).href = url; fr.src = url;
+                r.addEventListener("click", function (e) { if (e.target.closest('[data-a="rl"]')) fr.src = url });
+            }
+            function registerWebApp(def, custom) {
+                return register({
+                    id: def.id, name: def.name, color: def.color, icon: def.icon, w: def.w || 920, h: def.h || 620, pinned: def.pinned, custom: !!custom,
+                    open: function (win) { openWeb(win, def.url) }
+                });
+            }
+            var webApps = load("an_webapps", []);
+            function addWebApp(name, url) {
+                name = (name || "").trim(); url = (url || "").trim();
+                if (!name || !url) return null;
+                if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+                try { var u = new URL(url); if (u.protocol !== "http:" && u.protocol !== "https:") return null } catch (e) { return null }
+                var colors = ["#1a73e8", "#d93025", "#188038", "#e37400", "#9334e6", "#007b83", "#c2185b"];
+                var def = { id: "web-" + Date.now().toString(36), name: name, url: url, color: colors[webApps.length % colors.length], pinned: true };
+                webApps.push(def); save("an_webapps", webApps); registerWebApp(def, true);
+                return def;
+            }
+            function removeWebApp(id) {
+                webApps = webApps.filter(function (d) { return d.id !== id }); save("an_webapps", webApps);
+                unregister(id);
+            }
+
+            function mkdirp(p) { var cur = ""; p.split("/").filter(Boolean).forEach(function (s) { cur += "/" + s; if (!FS[cur]) FS[cur] = { t: "d" } }) }
+            var toastT;
+            function toast(msg) {
+                var t = $("#toast"); t.textContent = msg; t.classList.add("show");
+                clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove("show") }, 2200);
+            }
+
+            /* Public API: available as window.MyOS (e.g. from the browser console) */
+            window.MyOS = {
+                register: register, registerWebApp: registerWebApp, unregister: unregister,
+                open: function (id, arg) { return openApp(id, arg) },
+                ask: ask, toast: toast, esc: esc,
+                fs: {
+                    read: function (p) { p = resolve("/", p); return FS[p] && FS[p].t === "f" ? FS[p].c : null },
+                    write: function (p, c) { p = resolve("/", p); mkdirp(dirOf(p)); FS[p] = { t: "f", c: String(c) }; saveFS() },
+                    list: function (p) { return kids(resolve("/", p)).map(base) }
+                }
+            };
+
+
+            /* ---------------- Installed HTML apps + app catalog ---------------- */
+            var htmlApps = load("an_html_apps", []);
+            var appCatalog = [
+                {
+                    id: "sample-welcome", name: "Welcome App", description: "A small starter HTML app you can customize.", color: "#188038",
+                    files: { "index.html": "<!doctype html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Welcome</title></head><body style=\"font:16px system-ui;padding:30px;background:#101827;color:white\"><h1>Welcome to MyOS!</h1><p>Your first installed HTML app.</p></body></html>" }
+                }
+            ];
+            function installHtmlApp(def) {
+                if (!def || !def.id || !def.files || !def.files["index.html"]) return false;
+                htmlApps = htmlApps.filter(function (x) { return x.id !== def.id }); htmlApps.push(def);
+                save("an_html_apps", htmlApps); registerHtmlApp(def); return true;
+            }
+            function uninstallHtmlApp(id) {
+                htmlApps = htmlApps.filter(function (x) { return x.id !== id }); save("an_html_apps", htmlApps);
+                unregister(id);
+            }
+            function htmlAppDocument(def) {
+                var files = def.files || {}, main = def.main || "index.html";
+                var html = files[main] || files["index.html"] || "";
+                var urls = {};
+                Object.keys(files).forEach(function (path) {
+                    if (path === main || path === "index.html") return;
+                    var value = files[path] || "";
+                    if (typeof value === "string" && value.indexOf("data:") === 0) urls[path] = value;
+                    else {
+                        var type = /\.css$/i.test(path) ? "text/css" : /\.js$/i.test(path) ? "text/javascript" :
+                            /\.json$/i.test(path) ? "application/json" : /\.svg$/i.test(path) ? "image/svg+xml" : "text/plain";
+                        urls[path] = URL.createObjectURL(new Blob([value], { type: type }));
+                    }
+                });
+                Object.keys(urls).sort(function (a, b) { return b.length - a.length; }).forEach(function (path) {
+                    var escaped = path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                    var variants = [path, "./" + path, "/" + path];
+                    variants.forEach(function (v) {
+                        var ev = v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                        html = html.replace(new RegExp("([\\\"'])" + ev + "([\\\"'])", "g"), "$1" + urls[path] + "$2");
+                    });
+                });
+                return html;
+            }
+            function registerHtmlApp(def) {
+                register({
+                    id: def.id, name: def.name, color: def.color || "#5f6368", pinned: false, custom: true, w: 850, h: 600,
+                    open: function (win) {
+                        win.body.className = "wc web";
+                        var frame = document.createElement("iframe");
+                        frame.setAttribute("sandbox", "allow-scripts allow-forms allow-popups allow-downloads");
+                        frame.style.cssText = "width:100%;height:100%;border:0;background:white";
+                        win.body.appendChild(frame); frame.srcdoc = htmlAppDocument(def);
+                    }
+                });
+            }
+            htmlApps.forEach(registerHtmlApp);
+
+            /* Folder-based HTML apps:
+               /home/user/Apps/<App Name>/index.html
+               Any files below that folder are bundled as app assets. */
+            function folderAppDefinition(folderPath) {
+                var folderName = base(folderPath), prefix = folderPath + "/";
+                var files = {};
+                Object.keys(FS).forEach(function (p) {
+                    if (p.indexOf(prefix) !== 0 || FS[p].t !== "f") return;
+                    var rel = p.slice(prefix.length);
+                    if (rel) files[rel] = FS[p].c || "";
+                });
+                if (!files["index.html"]) return null;
+                var id = "folder-" + folderPath.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+                return { id: id, name: folderName, description: "HTML app from Apps folder", color: "#007b83", main: "index.html", files: files };
+            }
+            function refreshFolderApps() {
+                var rootPath = "/home/user/Apps";
+                if (!FS[rootPath]) FS[rootPath] = { t: "d" };
+                kids(rootPath).forEach(function (folder) {
+                    if (FS[folder].t !== "d") return;
+                    var def = folderAppDefinition(folder);
+                    if (def) registerHtmlApp(def);
+                    else {
+                        var id = "folder-" + folder.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+                        if (APP[id]) unregister(id);
+                    }
+                });
+                saveFS();
+            }
+            refreshFolderApps();
+            /* Repository Apps folder integration */
+
+            var repoFolderApps = [
+                { id: "fern-browser", name: "Fern Browser", folder: "Fern Browser" },
+                { id: "vertx-browser", name: "Vertx Browser", folder: "Vertx Browser" },
+                { id: "gn-math", name: "GN - Math 2.0", folder: "GN - Math 2.0" },
+                { id: "ipad-os", name: "Ipad OS", folder: "Ipad OS" },
+                { id: "windows-12", name: "Windows 12 OS", folder: "Windows 12 OS" },
+                { id: "macos", name: "MacOS", folder: "MacOS" },
+                { id: "ppkiwi-sdk", name: "ppkiwi sdk", folder: "ppkiwi sdk" },
+                { id: "tnav", name: "Totally Not A Virus", folder: "Totally Not A Virus" },
+                { id: "cs", name: "Code Studio", folder: "Code Studio" }
+            ];
+
+            var repoInstalled = load("an_repo_installed", []);
+
+            if (!Array.isArray(repoInstalled)) {
+                repoInstalled = [];
+                save("an_repo_installed", repoInstalled);
+            }
+
+            function repoInstall(id) {
+                var app = repoFolderApps.find(function (a) {
+                    return a.id === id;
+                });
+
+                if (!app) return;
+
+                if (!repoInstalled.includes(id)) {
+                    repoInstalled.push(id);
+                    save("an_repo_installed", repoInstalled);
+                }
+
+                registerRepoFolderApp(app);
+            }
+
+            function repoUninstall(id) {
+                repoInstalled = repoInstalled.filter(function (x) {
+                    return x !== id;
+                });
+
+                save("an_repo_installed", repoInstalled);
+                unregister("repo-" + id);
+            }
+
+            function registerRepoFolderApp(app) {
+                register({
+                    id: "repo-" + app.id,
+                    name: app.name,
+                    color: "#007b83",
+                    custom: true,
+                    w: 900,
+                    h: 620,
+                    open: function (win) {
+                        win.body.className = "wc web";
+
+                        var frame = document.createElement("iframe");
+                        frame.style.cssText =
+                            "width:100%;height:100%;border:0;background:white";
+
+                        frame.src = "Apps/" +
+                            app.folder.split("/").map(encodeURIComponent).join("/") +
+                            "/index.html";
+
+                        win.body.appendChild(frame);
+                    }
+                });
+            }
+
+            /* Restore installed repository apps */
+            repoInstalled.forEach(function (id) {
+                var app = repoFolderApps.find(function (a) {
+                    return a.id === id;
+                });
+
+                if (app) registerRepoFolderApp(app);
+            });
+            function openAppStore(w) {
+                var root = w.body, tab = "store";
+                root.className = "wc store";
+                function draw() {
+                    var top = '<div class="store-head"><h2>MyOS App Store</h2><p>Install apps or build your own HTML apps with multiple files.</p><div class="store-tabs"><button data-tab="store" class="' + (tab === "store" ? "on" : "") + '">Discover</button><button data-tab="installed" class="' + (tab === "installed" ? "on" : "") + '">Installed</button><button data-tab="create" class="' + (tab === "create" ? "on" : "") + '">Create HTML app</button></div></div>';
+                    if (tab === "create") {
+                        root.innerHTML = top + '<div class="builder"><label>App name</label><input id="builder-name" placeholder="My HTML App"><label>Main HTML file</label><input id="builder-main" value="index.html"><div id="builder-files"></div><div class="actions"><button class="btn" data-file-add>Add another file</button><button class="btn fill" data-app-save>Save and install</button></div><p class="hint">Add files such as index.html, style.css and script.js. Link them from your HTML using their file names, for example &lt;link rel=\"stylesheet\" href=\"style.css\"&gt; and &lt;script src=\"script.js\"&gt;.</p></div>';
+                        addEditorFile("index.html", "<!doctype html>\n<html>\n<head><title>My App</title><link rel=\"stylesheet\" href=\"style.css\"></head>\n<body><h1>Hello MyOS!</h1><script src=\"script.js\"><\/script></body>\n</html>");
+                        addEditorFile("style.css", "body { font-family: sans-serif; padding: 24px; }");
+                        addEditorFile("script.js", "console.log('My MyOS app is running!');");
+                    } else {
+                        var list = tab === "installed"
+                            ? htmlApps.concat(repoFolderApps.filter(function (a) {
+                                return repoInstalled.includes(a.id);
+                            }))
+                            : appCatalog.filter(function (d) {
+                                return !htmlApps.some(function (x) { return x.id === d.id; });
+                            }).concat(repoFolderApps.filter(function (a) {
+                                return !repoInstalled.includes(a.id);
+                            }));
+                        root.innerHTML = top + '<div class="store-list">' + (list.length ? list.map(function (d) {
+                            var installed = htmlApps.some(function (x) { return x.id === d.id });
+                            return '<div class="store-card">' + icHtml({ name: d.name, color: d.color || "#5f6368" }) + '<div class="meta"><b>' + esc(d.name) + '</b><small>' + esc(d.description || "HTML app") + '</small></div><button data-store="' + esc(d.id) + '">' + (tab === "installed" ? "Uninstall" : installed ? "Installed" : "Install") + '</button></div>';
+                        }).join("") : '<p style="color:var(--sub);padding:24px">No apps here yet. Create your own HTML app!</p>') + '</div>';
+                    }
+                }
+                function addEditorFile(name, content) {
+                    var box = document.createElement("div"); box.className = "file-editor";
+                    box.innerHTML = '<label>File path / name</label><input class="file-name" value="' + esc(name) + '"><label>Code</label><textarea class="file-code" spellcheck="false"></textarea><div style="text-align:right"><button class="btn" data-file-remove>Remove file</button></div>';
+                    $(".file-code", box).value = content || ""; $("#builder-files", root).appendChild(box);
+                }
+
+                root.addEventListener("click", function (e) {
+                    var t;
+
+                    if ((t = e.target.closest("[data-tab]"))) {
+                        tab = t.getAttribute("data-tab");
+                        draw();
+                    }
+
+                    else if (e.target.closest("[data-file-add]")) {
+                        addEditorFile("new-file.txt", "");
+                    }
+
+                    else if ((t = e.target.closest("[data-file-remove]"))) {
+                        t.closest(".file-editor").remove();
+                    }
+
+                    /* Create HTML app */
+                    else if (e.target.closest("[data-app-save]")) {
+                        var name = $("#builder-name", root).value.trim();
+                        var main = $("#builder-main", root).value.trim() || "index.html";
+                        var files = {};
+
+                        root.querySelectorAll(".file-editor").forEach(function (box) {
+                            var n = $(".file-name", box).value.trim().replace(/^\/+/, "");
+                            if (n) files[n] = $(".file-code", box).value;
+                        });
+
+                        if (!name || !files[main]) {
+                            toast("Add an app name and its main HTML file");
+                            return;
+                        }
+
+                        var def = {
+                            id: "html-" + Date.now().toString(36),
+                            name: name,
+                            description: "Custom HTML app",
+                            color: "#1a73e8",
+                            main: main,
+                            files: files
+                        };
+
+                        try {
+                            installHtmlApp(def);
+                            toast(name + " installed");
+                            tab = "installed";
+                            draw();
+                        } catch (err) {
+                            toast("Couldn't save app. Browser storage may be full.");
+                        }
+                    }
+
+                    /* Install or uninstall repository folder apps */
+                    else if ((t = e.target.closest("[data-store]"))) {
+                        var id = t.getAttribute("data-store");
+
+                        var repoApp = repoFolderApps.find(function (a) {
+                            return a.id === id;
+                        });
+
+                        if (repoApp) {
+                            if (repoInstalled.includes(repoApp.id)) {
+                                repoUninstall(repoApp.id);
+                                toast(repoApp.name + " uninstalled");
+                            } else {
+                                repoInstall(repoApp.id);
+                                toast(repoApp.name + " installed");
+                            }
+                        }
+
+                        /* Existing built-in catalog apps */
+                        else {
+                            var installed = htmlApps.some(function (x) {
+                                return x.id === id;
+                            });
+
+                            if (installed) {
+                                uninstallHtmlApp(id);
+                                toast("App uninstalled");
+                            } else {
+                                var def = appCatalog.find(function (x) {
+                                    return x.id === id;
+                                });
+
+                                if (def) {
+                                    installHtmlApp(def);
+                                    toast(def.name + " installed");
+                                }
+                            }
+                        }
+
+                        draw();
+                        renderShelf();
+                        buildLauncher($("#lq").value);
+                    }
+                });
+
+                draw(); return {};
+            }
+            function openUpdateLog(w) {
+                w.body.className = "wc"; w.body.innerHTML = '<div class="store-head"><h2>MyOS Update Log</h2><p>Recent changes to this desktop.</p></div><div class="update-list"><div class="update-item"><b>Update 0.2 — App Store & HTML apps</b><small>November 2, 2026</small><ul><li>Added an App Store with Discover and Installed tabs.</li><li>Install and uninstall supported apps.</li><li>Create custom HTML apps directly from code.</li><li>Support multiple files and folders in each app project.</li></ul></div><div class="update-item"><b>MyOS OS Template — Initial release</b><small>Initial release</small><ul><li>Desktop windows, shelf, launcher and quick settings.</li><li>Files, Text, Terminal, Settings, Calculator and Newspedia.</li></ul></div></div>';
+                return {};
+            }
+
+            function openmybrowser(w) {
+                w.body.className = "wc";
+                w.body.innerHTML = `
+        <div style="padding:20px">
+          <h2>MyBrowser</h2>
+          <p>MyBrowser is running.</p>
+        </div>
+      `;
+                return {};
+            }
+
+            /* ---- MyOS media, music, AI and debug apps ---- */
+            register({
+                id: "media-viewer", name: "Media Viewer", color: "#2878d0", icon: G.files, w: 850, h: 580, open: function (win, arg) {
+                    arg = arg || {}; var root = win.body; root.className = "wc"; root.style.cssText = "background:#151515;color:white;padding:12px;overflow:auto";
+                    var safeName = esc(arg.name || "Media Viewer"), body = "";
+                    if (arg.type === "image") body = '<img src="' + arg.url + '" style="display:block;max-width:100%;max-height:calc(100% - 45px);margin:auto;object-fit:contain">';
+                    else if (arg.type === "video") body = '<video src="' + arg.url + '" controls autoplay style="display:block;width:100%;max-height:calc(100% - 45px)"></video>';
+                    else if (arg.type === "audio") body = '<div style="padding:35px;text-align:center"><div style="font-size:64px">♫</div><h2>' + safeName + '</h2><audio src="' + arg.url + '" controls autoplay style="width:100%;margin-top:20px"></audio></div>';
+                    else if (arg.type === "html" || arg.html) { var f = document.createElement("iframe"); f.sandbox = "allow-scripts allow-forms allow-popups allow-downloads"; f.style.cssText = "width:100%;height:calc(100% - 40px);border:0;background:white"; f.srcdoc = arg.html || ""; root.innerHTML = '<h3 style="padding:8px">' + safeName + '</h3>'; root.appendChild(f); return {}; }
+                    else body = '<iframe src="' + arg.url + '" style="width:100%;height:calc(100% - 45px);border:0;background:white"></iframe>';
+                    root.innerHTML = '<h3 style="padding:8px">' + safeName + '</h3><div style="height:calc(100% - 40px);display:flex;align-items:center;justify-content:center">' + body + '</div>'; return {};
+                }
+            });
+            register({
+                id: "myapp-viewer", name: "MyApp Runner", color: "#526ee8", w: 850, h: 600, open: function (win, arg) {
+                    var f = document.createElement("iframe"); f.sandbox = "allow-scripts allow-forms allow-popups allow-downloads"; f.style.cssText = "width:100%;height:100%;border:0;background:white"; f.srcdoc = (arg && arg.html) || ""; win.body.className = "wc"; win.body.appendChild(f); return {};
+                }
+            });
+            register({
+                id: "mymusic", name: "MyMusic", color: "#19a765", icon: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>', pinned: true, w: 820, h: 640, open: function (win) {
+                    var root = win.body; root.className = "wc"; root.style.cssText = "background:#101510;color:#fff;overflow:auto";
+                    var wisp = load("an_wisp_url", "wss://anura.pro");
+                    root.innerHTML = '<div style="height:100%;display:flex;flex-direction:column;padding:16px;gap:10px;font-family:Arial"><div><h1 style="color:#35d879">♫ MyMusic</h1><p style="color:#aaa;margin:6px 0 10px">SoundCloud website through your selected WISP server</p><div style="display:flex;gap:8px"><input id="mm-sc-url" value="https://soundcloud.com" placeholder="https://soundcloud.com" style="flex:1;min-width:0;padding:10px;border-radius:7px"><button id="mm-sc-load" class="btn fill">Go</button></div><div id="mm-proxy-note" style="font-size:12px;color:#aaa;margin-top:7px">WISP: ' + esc(wisp) + ' · Scramjet proxy</div></div><iframe id="mm-sc-frame" title="SoundCloud website through Scramjet" allow="autoplay; clipboard-read; clipboard-write; fullscreen" style="flex:1;min-height:280px;width:100%;border:0;background:#171717;border-radius:8px"></iframe><details style="flex:none"><summary style="cursor:pointer;color:#aaa">MyOS music library</summary><div id="mm-list" style="padding:8px 0"></div><div id="mm-title" style="padding:6px 0">Choose a local song</div><audio id="mm-player" controls style="width:100%"></audio></details></div>';
+                    var list = $("#mm-list", root), player = $("#mm-player", root), title = $("#mm-title", root), songs = [];
+                    var musicFrame = $("#mm-sc-frame", root);
+                    function loadSoundCloud(raw) {
+                        var target = (raw || "https://soundcloud.com").trim();
+                        if (!/^https?:\/\//i.test(target)) target = "https://" + target;
+                        try { var parsed = new URL(target); if (!/^(soundcloud\.com|www\.soundcloud\.com|m\.soundcloud\.com)$/i.test(parsed.hostname)) throw new Error("Use soundcloud.com or one of its pages."); target = parsed.href; }
+                        catch (err) { toast(err.message || "Enter a valid SoundCloud address"); return; }
+                        $("#mm-proxy-note", root).textContent = "Connecting through " + load("an_wisp_url", "wss://anura.pro") + "…";
+                        ensureScramjet().then(function (controller) {
+                            controller.createFrame(musicFrame).go(target);
+                            $("#mm-proxy-note", root).textContent = "SoundCloud is routed through Scramjet · " + load("an_wisp_url", "wss://anura.pro");
+                        }).catch(function (err) { $("#mm-proxy-note", root).textContent = "Scramjet error: " + err.message; });
+                    }
+                    $("#mm-sc-load", root).addEventListener("click", function () { loadSoundCloud($("#mm-sc-url", root).value); });
+                    $("#mm-sc-url", root).addEventListener("keydown", function (e) { if (e.key === "Enter") loadSoundCloud(this.value); });
+                    loadSoundCloud("https://soundcloud.com");
+                    function add(name, url) { if (!songs.some(function (x) { return x.url === url })) songs.push({ name: name, url: url }); }
+                    Object.keys(FS).forEach(function (path) { var x = FS[path]; if (x.t === "f" && /\.mp3$/i.test(path) && /^data:audio\//i.test(x.c || "")) add(base(path), x.c); });
+                    function draw() { list.innerHTML = songs.length ? songs.map(function (x, i) { return '<button data-song="' + i + '" style="display:block;width:100%;padding:13px;text-align:left;color:white;border-bottom:1px solid #344034;background:transparent">♫ &nbsp;' + esc(x.name) + '</button>'; }).join("") : '<p style="color:#aaa">No songs yet. Upload MP3 files in MyOS Files or add entries to music/playlist.json.</p>'; }
+                    list.addEventListener("click", function (e) { var b = e.target.closest("[data-song]"); if (!b) return; var song = songs[Number(b.dataset.song)]; if (!song) return; player.src = song.url; title.textContent = song.name; player.play().catch(function () { }); });
+                    fetch("music/playlist.json").then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (items) { items.forEach(function (x) { if (x.name && x.file && /^music\/[a-z0-9._/-]+\.mp3$/i.test(x.file)) add(x.name, x.file); }); draw(); }).catch(function () { });
+                    draw(); return {};
+                }
+            });
+            register({
+                id: "myai", name: "MyAI", color: "#7655d9", icon: '<circle cx="12" cy="12" r="8"/><path d="M12 7v10M7 12h10"/>', pinned: true, w: 600, h: 500, open: function (win) {
+                    var root = win.body; root.className = "wc"; root.innerHTML = '<div style="height:100%;display:flex;flex-direction:column;padding:18px"><h2>✦ MyAI</h2><div id="mai-chat" style="flex:1;overflow:auto;padding:16px 0"><p><b>MyAI:</b> Hello! Connect an AI endpoint in the source to enable live AI responses.</p></div><form id="mai-form" style="display:flex;gap:8px"><input id="mai-input" placeholder="Ask MyAI..." style="flex:1;padding:10px"><button class="btn fill">Send</button></form></div>';
+                    var chat = $("#mai-chat", root); $("#mai-form", root).addEventListener("submit", function (e) { e.preventDefault(); var input = $("#mai-input", root), q = input.value.trim(); if (!q) return; var p = document.createElement("p"); p.textContent = "You: " + q; chat.appendChild(p); var a = document.createElement("p"); a.style.margin = "10px 0 18px"; a.textContent = "MyAI: I am in offline mode in this build. A model/API connection is required for generated answers."; chat.appendChild(a); input.value = ""; chat.scrollTop = chat.scrollHeight; }); return {};
+                }
+            });
+
+            /* ---- built-in apps ---- */
+            [
+
+                { id: "mybrowser", name: "MyBrowser", color: "#d93025", icon: G.news, w: 880, h: 600, pinned: true, open: openmybrowser },
+                { id: "news", name: "Newspedia", color: "#d93025", icon: G.news, w: 880, h: 600, pinned: true, open: openNews },
+                { id: "files", name: "Files", color: "#1a73e8", icon: G.files, w: 760, h: 500, pinned: true, open: openFiles },
+                { id: "text", name: "Text", color: "#188038", icon: G.text, w: 640, h: 480, pinned: true, open: openText },
+                { id: "term", name: "Terminal", color: "#3c4043", icon: G.term, w: 680, h: 440, pinned: true, open: openTerm },
+                { id: "set", name: "Settings", color: "#5f6368", icon: G.gear, w: 760, h: 520, pinned: true, open: openSettings },
+                { id: "store", name: "App Store", color: "#007b83", icon: '<path d="M4 7h16l-1 13H5L4 7z"/><path d="M9 7a3 3 0 0 1 6 0"/>', w: 820, h: 600, pinned: true, open: openAppStore },
+                { id: "updates", name: "Update Log", color: "#9334e6", icon: '<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>', w: 620, h: 500, pinned: false, open: openUpdateLog }
+            ].forEach(function (d) { register(d) });
+
+            /* =====================================================================
+               ★★★  ADD YOUR APPS HERE  ★★★
+
+               An app is one register({...}) call:
+
+                 id       unique short name, no spaces              (required)
+                 name     label under the icon / in the title bar
+                 color    icon background, any CSS color
+                 icon     SVG shapes drawn on a 24x24 grid, white stroke
+                          (leave out and the first letter of the name is used)
+                 w, h     starting window size in pixels
+                 pinned   true = also show on the shelf
+                 open     function(win, arg) that fills the window    (required)
+
+               Inside open(win):
+                 win.body            the empty window content area (a <div>) - put your UI in it
+                 win.setTitle("x")   change the title bar text
+                 win.closers.push(fn)  run fn when the window closes (clear timers here)
+
+               Helpers: MyOS.fs.read/write/list, MyOS.ask(win, title, default, cb),
+                        MyOS.toast("message"), MyOS.open("appId")
+
+               An app that is just a website needs one line:
+                 registerWebApp({id:"wiki", name:"Wikipedia", url:"https://en.m.wikipedia.org", color:"#202124", pinned:true});
+               ===================================================================== */
+
+            register({
+                id: "calc",
+                name: "Calculator",
+                color: "#e37400",
+                icon: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M16 11v6"/>',
+                w: 330, h: 480,
+                pinned: true,
+                open: function (win) {
+                    var root = win.body; root.className = "wc calc"; root.tabIndex = 0;
+                    root.innerHTML = '<div class="cd"><small></small><div class="cv">0</div></div><div class="ck"></div>';
+                    var keys = ["C", "±", "%", "÷", "7", "8", "9", "×", "4", "5", "6", "−", "1", "2", "3", "+", "0", ".", "⌫", "="];
+                    var ck = $(".ck", root), cv = $(".cv", root), sm = $("small", root);
+                    ck.innerHTML = keys.map(function (k) {
+                        var cls = "÷×−+".indexOf(k) > -1 ? "op" : k === "=" ? "eq" : "";
+                        return '<button class="' + cls + '" data-k="' + k + '">' + k + '</button>';
+                    }).join("");
+                    var cur = "0", prev = null, op = null, fresh = false, hist = "";
+                    var f = { "÷": function (a, b) { return a / b }, "×": function (a, b) { return a * b }, "−": function (a, b) { return a - b }, "+": function (a, b) { return a + b } };
+                    function show() { cv.textContent = cur; sm.textContent = hist; cv.style.fontSize = cur.length > 9 ? "30px" : "42px" }
+                    function calc() { var v = f[op](parseFloat(prev), parseFloat(cur)); cur = isFinite(v) ? String(+v.toPrecision(12)) : "Error" }
+                    function press(k) {
+                        if (cur === "Error" && k !== "C") { cur = "0"; prev = null; op = null; hist = ""; fresh = false }
+                        if (/^[0-9.]$/.test(k)) {
+                            if (fresh) { cur = "0"; fresh = false }
+                            if (k === ".") { if (cur.indexOf(".") < 0) cur += "." }
+                            else cur = cur === "0" ? k : cur + k;
+                        } else if (k === "C") { cur = "0"; prev = null; op = null; hist = ""; fresh = false }
+                        else if (k === "⌫") { cur = (cur.length > 1 && !fresh) ? cur.slice(0, -1) : "0"; if (cur === "-") cur = "0" }
+                        else if (k === "±") { if (cur !== "0") cur = cur[0] === "-" ? cur.slice(1) : "-" + cur }
+                        else if (k === "%") { cur = String(+(parseFloat(cur) / 100).toPrecision(12)) }
+                        else if (k === "=") { if (op !== null) { hist = prev + " " + op + " " + cur + " ="; calc(); prev = null; op = null; fresh = true } }
+                        else { if (op !== null && !fresh) calc(); prev = cur; op = k; hist = prev + " " + op; fresh = true }
+                        show();
+                    }
+                    ck.addEventListener("click", function (e) { var b = e.target.closest("[data-k]"); if (b) press(b.getAttribute("data-k")) });
+                    root.addEventListener("keydown", function (e) {
+                        var m = { "*": "×", "/": "÷", "-": "−", "Enter": "=", "Backspace": "⌫", "Escape": "C", ",": "." };
+                        var k = m[e.key] || e.key;
+                        if (keys.indexOf(k) > -1) { e.preventDefault(); press(k) }
+                    });
+                    setTimeout(function () { root.focus() }, 60);
+                    show();
+                }
+            });
+
+
+            /* Shared Scramjet runtime: one controller for MyBrowser and MyMusic. */
+            var SCRAMJET_BASE = new URL(".", location.href).pathname;
+            var scramjetPromise = null, scramjetController = null, scramjetWisp = "";
+            function scramjetAsset(path) { return SCRAMJET_BASE + path.replace(/^\/+/, ""); }
+            function loadScramjetScript(path) {
+                return new Promise(function (resolve, reject) {
+                    var script = document.createElement("script"); script.src = scramjetAsset(path);
+                    script.onload = resolve; script.onerror = function () { reject(new Error("Could not load " + path)); };
+                    document.head.appendChild(script);
+                });
+            }
+            async function ensureScramjet() {
+                if (!("serviceWorker" in navigator) || location.protocol === "file:")
+                    throw new Error("Scramjet needs MyOS hosted on GitHub Pages (HTTPS). Open the hosted site, not the local HTML file.");
+                if (!scramjetPromise) {
+                    scramjetPromise = (async function () {
+                        var registration = await navigator.serviceWorker.register(scramjetAsset("sw.js"), { scope: SCRAMJET_BASE, updateViaCache: "none" });
+                        await navigator.serviceWorker.ready;
+                        if (!navigator.serviceWorker.controller) await new Promise(function (resolve) {
+                            navigator.serviceWorker.addEventListener("controllerchange", resolve, { once: true });
+                        });
+                        var sw = navigator.serviceWorker.controller || registration.active;
+                        if (!sw) throw new Error("Scramjet service worker did not activate.");
+                        await loadScramjetScript("scram/scramjet.js");
+                        await loadScramjetScript("controller/controller.api.js");
+                        await loadScramjetScript("utils/scramjet-utils.js");
+                        var mod = await import(scramjetAsset("libcurl/index.mjs")), LibcurlClient = mod.default;
+                        if (!LibcurlClient) throw new Error("Scramjet WISP transport did not load.");
+                        scramjetWisp = load("an_wisp_url", "wss://anura.pro");
+                        var transport = new LibcurlClient({ wisp: scramjetWisp });
+                        scramjetController = new window.$scramjetController.Controller({
+                            serviceworker: sw, transport: transport,
+                            config: {
+                                prefix: SCRAMJET_BASE + "~/sj/", scramjetPath: scramjetAsset("scram/scramjet.js"),
+                                wasmPath: scramjetAsset("scram/scramjet.wasm"), injectPath: scramjetAsset("controller/controller.inject.js")
+                            }
+                        });
+                        await scramjetController.wait();
+                        setInterval(function () { if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage("keepalive"); }, 15000);
+                        return scramjetController;
+                    })().catch(function (err) { scramjetPromise = null; throw err; });
+                }
+                var controller = await scramjetPromise, selected = load("an_wisp_url", "wss://anura.pro");
+                if (selected !== scramjetWisp) {
+                    var transportModule = await import(scramjetAsset("libcurl/index.mjs"));
+                    controller.setTransport(new transportModule.default({ wisp: selected }));
+                    scramjetWisp = selected;
+                }
+                return controller;
+            }
+
+            register({
+                id: "mybrowser",
+                name: "MyBrowser",
+                icon: "",
+                open: function (win) {
+                    var root = win.body;
+                    root.innerHTML = "";
+                    var browserFrameToken = 0;
+
+                    var saved = {};
+                    try {
+                        saved = JSON.parse(localStorage.getItem("mybrowser-settings") || "{}");
+                    } catch (e) { }
+
+                    var settings = {
+                        engine: saved.engine || "MyBrowser",
+                        background: saved.background || "#101827",
+                        cursor: saved.cursor || "default"
+                    };
+
+                    var favorites = [
+                        { name: "Google", url: "https://www.google.com" },
+                        { name: "YouTube", url: "https://www.youtube.com" },
+                        { name: "Wikipedia", url: "https://www.wikipedia.org" },
+                        { name: "Reddit", url: "https://www.reddit.com" },
+                        { name: "GitHub", url: "https://github.com" },
+                        { name: "DuckDuckGo", url: "https://duckduckgo.com" }
+                    ];
+
+                    root.style.height = "100%";
+                    root.style.display = "flex";
+                    root.style.flexDirection = "column";
+                    root.style.overflow = "hidden";
+                    root.style.background = settings.background;
+                    root.style.cursor = settings.cursor;
+
+                    var style = document.createElement("style");
+                    style.textContent = `
+          .mb-browser { height:100%; display:flex; flex-direction:column;
+            color:white; font-family:Arial,sans-serif; overflow:hidden; }
+          .mb-toolbar { display:flex; gap:7px; padding:9px;
+            background:#182438; align-items:center; }
+          .mb-btn { border:0; border-radius:7px; padding:9px 12px;
+            background:#30415c; color:white; cursor:pointer; }
+          .mb-btn:hover { background:#405777; }
+          .mb-address { flex:1; min-width:0; padding:10px 12px;
+            border:1px solid #465773; border-radius:8px;
+            background:#0d1727; color:white; outline:none; }
+          .mb-home { flex:1; overflow:auto; text-align:center;
+            padding:35px 18px; }
+          .mb-logo { font-size:38px; font-weight:bold; margin:25px 0; }
+          .mb-search { display:flex; max-width:620px; margin:20px auto;
+            gap:8px; }
+          .mb-search input { flex:1; min-width:0; padding:14px;
+            border-radius:10px; border:1px solid #53647e;
+            background:#0d1727; color:white; font-size:16px; }
+          .mb-favs { display:flex; flex-wrap:wrap; justify-content:center;
+            gap:12px; max-width:650px; margin:28px auto; }
+          .mb-fav { width:105px; padding:17px 8px; border-radius:12px;
+            background:#25364f; color:white; border:0; cursor:pointer; }
+          .mb-fav:hover { background:#3a5275; }
+          .mb-settings { padding:22px; overflow:auto; flex:1; }
+          .mb-settings label { display:block; margin:17px 0 7px; }
+          .mb-settings select, .mb-settings input { padding:9px;
+            border-radius:7px; border:1px solid #53647e;
+            background:#0d1727; color:white; }
+          .mb-view { border:0; flex:1; width:100%; background:white; }
+        `;
+                    root.appendChild(style);
+
+                    var app = document.createElement("div");
+                    app.className = "mb-browser";
+                    app.style.flex = "1";
+                    app.style.minHeight = "0";
+                    root.appendChild(app);
+
+                    var currentPage = "home";
+
+                    function saveSettings() {
+                        localStorage.setItem("mybrowser-settings", JSON.stringify(settings));
+                        root.style.background = settings.background;
+                        root.style.cursor = settings.cursor;
+                    }
+
+                    function searchUrl(query) {
+                        var q = encodeURIComponent(query);
+                        if (settings.engine === "Google")
+                            return "https://www.google.com/search?q=" + q;
+                        if (settings.engine === "Brave")
+                            return "https://search.brave.com/search?q=" + q;
+                        return "https://duckduckgo.com/?q=" + q;
+                    }
+
+                    function navigate(value) {
+                        value = value.trim();
+                        if (!value) return;
+
+                        var url;
+                        if (/^https?:\/\//i.test(value)) {
+                            url = value;
+                        } else if (/^[\w-]+\.[a-z]{2,}([/:?#].*)?$/i.test(value)) {
+                            url = "https://" + value;
+                        } else {
+                            url = searchUrl(value);
+                        }
+
+                        showPage(url);
+                    }
+
+                    function showPage(url) {
+                        currentPage = "page";
+                        app.innerHTML = "";
+
+                        var toolbar = document.createElement("div");
+                        toolbar.className = "mb-toolbar";
+
+                        var homeBtn = document.createElement("button");
+                        homeBtn.className = "mb-btn";
+                        homeBtn.textContent = "⌂";
+                        homeBtn.title = "Home";
+                        homeBtn.onclick = showHome;
+
+                        var address = document.createElement("input");
+                        address.className = "mb-address";
+                        address.value = url;
+                        address.placeholder = "Search or enter website address";
+                        address.onkeydown = function (e) {
+                            if (e.key === "Enter") navigate(address.value);
+                        };
+
+                        var go = document.createElement("button");
+                        go.className = "mb-btn";
+                        go.textContent = "Go";
+                        go.onclick = function () { navigate(address.value); };
+
+                        var settingsBtn = document.createElement("button");
+                        settingsBtn.className = "mb-btn";
+                        settingsBtn.textContent = "⚙";
+                        settingsBtn.title = "Settings";
+                        settingsBtn.onclick = showSettings;
+
+                        toolbar.append(homeBtn, address, go, settingsBtn);
+                        app.appendChild(toolbar);
+
+                        var frame = document.createElement("iframe");
+                        frame.className = "mb-view";
+                        frame.src = "about:blank";
+                        frame.setAttribute("allow", "clipboard-read; clipboard-write; autoplay; fullscreen");
+                        frame.referrerPolicy = "no-referrer";
+                        app.appendChild(frame);
+                        var token = ++browserFrameToken;
+                        ensureScramjet().then(function (controller) {
+                            if (token !== browserFrameToken || !frame.isConnected) return;
+                            controller.createFrame(frame).go(url);
+                        }).catch(function (error) {
+                            if (token !== browserFrameToken) return;
+                            var message = document.createElement("div");
+                            message.style.cssText = "padding:18px;background:#182438;color:white;font:14px Arial";
+                            message.textContent = "Scramjet could not start: " + error.message + " Check the GitHub Pages deployment and WISP server.";
+                            app.appendChild(message);
+                        });
+                    }
+
+                    function showHome() {
+                        currentPage = "home";
+                        app.innerHTML = "";
+
+                        var toolbar = document.createElement("div");
+                        toolbar.className = "mb-toolbar";
+
+                        var settingsBtn = document.createElement("button");
+                        settingsBtn.className = "mb-btn";
+                        settingsBtn.textContent = "⚙ Settings";
+                        settingsBtn.onclick = showSettings;
+                        toolbar.appendChild(settingsBtn);
+                        app.appendChild(toolbar);
+
+                        var home = document.createElement("div");
+                        home.className = "mb-home";
+
+                        var logo = document.createElement("div");
+                        logo.className = "mb-logo";
+                        logo.textContent = "MyBrowser";
+
+                        var tagline = document.createElement("div");
+                        tagline.textContent = "Search the web. Explore anything.";
+                        tagline.style.color = "#b9c7dc";
+
+                        var searchArea = document.createElement("div");
+                        searchArea.className = "mb-search";
+
+                        var search = document.createElement("input");
+                        search.placeholder = "Search or enter a website...";
+                        search.type = "text";
+                        search.onkeydown = function (e) {
+                            if (e.key === "Enter") navigate(search.value);
+                        };
+
+                        var searchBtn = document.createElement("button");
+                        searchBtn.className = "mb-btn";
+                        searchBtn.textContent = "Search";
+                        searchBtn.onclick = function () { navigate(search.value); };
+
+                        searchArea.append(search, searchBtn);
+
+                        var favTitle = document.createElement("h3");
+                        favTitle.textContent = "Favorite Websites";
+
+                        var favs = document.createElement("div");
+                        favs.className = "mb-favs";
+
+                        favorites.forEach(function (fav) {
+                            var button = document.createElement("button");
+                            button.className = "mb-fav";
+                            button.textContent = "\n" + fav.name;
+                            button.onclick = function () { showPage(fav.url); };
+                            favs.appendChild(button);
+                        });
+
+                        home.append(logo, tagline, searchArea, favTitle, favs);
+                        app.appendChild(home);
+                    }
+
+                    function showSettings() {
+                        currentPage = "settings";
+                        app.innerHTML = "";
+
+                        var toolbar = document.createElement("div");
+                        toolbar.className = "mb-toolbar";
+
+                        var back = document.createElement("button");
+                        back.className = "mb-btn";
+                        back.textContent = "← Home";
+                        back.onclick = showHome;
+                        toolbar.appendChild(back);
+                        app.appendChild(toolbar);
+
+                        var panel = document.createElement("div");
+                        panel.className = "mb-settings";
+
+                        var heading = document.createElement("h2");
+                        heading.textContent = "MyBrowser Settings";
+                        panel.appendChild(heading);
+
+                        function addLabel(text) {
+                            var label = document.createElement("label");
+                            label.textContent = text;
+                            panel.appendChild(label);
+                        }
+
+                        addLabel("Search Engine");
+                        var engine = document.createElement("select");
+                        ["MyBrowser", "Google", "Brave", "DuckDuckGo"].forEach(function (name) {
+                            var option = document.createElement("option");
+                            option.value = name;
+                            option.textContent = name;
+                            engine.appendChild(option);
+                        });
+                        engine.value = settings.engine;
+                        engine.onchange = function () {
+                            settings.engine = engine.value;
+                            saveSettings();
+                        };
+                        panel.appendChild(engine);
+
+                        addLabel("Browser Background");
+                        var background = document.createElement("input");
+                        background.type = "color";
+                        background.value = settings.background;
+                        background.oninput = function () {
+                            settings.background = background.value;
+                            saveSettings();
+                        };
+                        panel.appendChild(background);
+
+                        addLabel("Cursor Style");
+                        var cursor = document.createElement("select");
+                        [
+                            ["default", "Default"],
+                            ["pointer", "Pointer"],
+                            ["crosshair", "Crosshair"],
+                            ["text", "Text"],
+                            ["grab", "Grab"],
+                            ["help", "Help"],
+                            ["wait", "Wait"]
+                        ].forEach(function (item) {
+                            var option = document.createElement("option");
+                            option.value = item[0];
+                            option.textContent = item[1];
+                            cursor.appendChild(option);
+                        });
+                        cursor.value = settings.cursor;
+                        cursor.onchange = function () {
+                            settings.cursor = cursor.value;
+                            saveSettings();
+                        };
+                        panel.appendChild(cursor);
+
+                        var note = document.createElement("p");
+                        note.style.color = "#b9c7dc";
+                        note.textContent = "Your settings are saved automatically.";
+                        panel.appendChild(note);
+
+                        app.appendChild(panel);
+                    }
+
+                    showHome();
+                }
+            });
+
+
+            /* web apps added from Settings > Apps are restored here */
+            webApps.forEach(function (d) { registerWebApp(d, true) });
+            /* ===================== end of app list ===================== */
+
+            /* ---------------- Window manager ---------------- */
+            var winsEl = $("#wins"), wins = {}, zTop = 10, active = null, cascade = 0;
+
+            function openApp(id, arg) {
+                var ex = wins[id];
+                if (ex) {
+                    if (ex.min) setMin(ex, false);
+                    focusWin(ex);
+                    if (ex.api && ex.api.load) ex.api.load(arg);
+                    return ex;
+                }
+                var a = APP[id];
+                var W = Math.min(a.w, winsEl.clientWidth - 16), H = Math.min(a.h, winsEl.clientHeight - 16);
+                var el = document.createElement("div");
+                el.className = "win";
+                el.style.width = W + "px"; el.style.height = H + "px";
+                var off = (cascade++ % 6) * 28;
+                el.style.left = Math.max(8, (winsEl.clientWidth - W) / 2 - 60 + off) + "px";
+                el.style.top = Math.max(8, (winsEl.clientHeight - H) / 2 - 30 + off) + "px";
+                el.innerHTML =
+                    '<div class="tb"><span class="tic" style="background:' + esc(a.color) + '">' + glyph(a) + '</span>' +
+                    '<span class="t">' + esc(a.name) + '</span>' +
+                    '<button class="wb" data-w="min" title="Minimize"><svg viewBox="0 0 14 14"><path d="M3 10h8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></button>' +
+                    '<button class="wb" data-w="max" title="Maximize"><svg viewBox="0 0 14 14"><rect x="2.5" y="2.5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></button>' +
+                    '<button class="wb x" data-w="close" title="Close"><svg viewBox="0 0 14 14"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></button></div>' +
+                    '<div class="wc"></div>' +
+                    ["r", "l", "b", "t", "br", "bl", "tr", "tl"].map(function (d) { return '<i class="rz ' + d + '" data-d="' + d + '"></i>' }).join("");
+                winsEl.appendChild(el);
+
+                var w = { id: id, el: el, body: $(".wc", el), closers: [], min: false, max: false, titleEl: $(".t", el), setTitle: function (t) { this.titleEl.textContent = t } };
+                wins[id] = w;
+
+                el.addEventListener("pointerdown", function () { focusWin(w) }, true);
+                el.addEventListener("click", function (e) {
+                    var b = e.target.closest("[data-w]"); if (!b) return;
+                    var k = b.getAttribute("data-w");
+                    if (k === "close") closeWin(w); else if (k === "min") setMin(w, true); else toggleMax(w);
+                });
+                var bar = $(".tb", el);
+                bar.addEventListener("dblclick", function (e) { if (!e.target.closest(".wb")) toggleMax(w) });
+                bar.addEventListener("pointerdown", function (e) {
+                    if (e.target.closest(".wb") || e.button || w.max) return;
+                    var sx = e.clientX, sy = e.clientY, ox = el.offsetLeft, oy = el.offsetTop;
+                    bar.setPointerCapture(e.pointerId);
+                    function mv(ev) {
+                        el.style.left = Math.min(Math.max(ox + ev.clientX - sx, 80 - el.offsetWidth), winsEl.clientWidth - 80) + "px";
+                        el.style.top = Math.min(Math.max(oy + ev.clientY - sy, 0), winsEl.clientHeight - 40) + "px";
+                    }
+                    function up() { bar.removeEventListener("pointermove", mv); bar.removeEventListener("pointerup", up) }
+                    bar.addEventListener("pointermove", mv); bar.addEventListener("pointerup", up);
+                });
+                el.querySelectorAll(".rz").forEach(function (h) {
+                    h.addEventListener("pointerdown", function (e) {
+                        e.preventDefault(); e.stopPropagation(); focusWin(w);
+                        var d = h.getAttribute("data-d"), sx = e.clientX, sy = e.clientY;
+                        var L = el.offsetLeft, T = el.offsetTop, WW = el.offsetWidth, HH = el.offsetHeight, mw = 340, mh = 240;
+                        h.setPointerCapture(e.pointerId);
+                        function mv(ev) {
+                            var dx = ev.clientX - sx, dy = ev.clientY - sy;
+                            if (d.indexOf("r") > -1) el.style.width = Math.max(mw, WW + dx) + "px";
+                            if (d.indexOf("b") > -1) el.style.height = Math.max(mh, HH + dy) + "px";
+                            if (d.indexOf("l") > -1) { var nw = Math.max(mw, WW - dx); el.style.width = nw + "px"; el.style.left = (L + WW - nw) + "px" }
+                            if (d.indexOf("t") > -1) { var nh = Math.max(mh, HH - dy); el.style.height = nh + "px"; el.style.top = Math.max(0, T + HH - nh) + "px" }
+                        }
+                        function up() { h.removeEventListener("pointermove", mv); h.removeEventListener("pointerup", up) }
+                        h.addEventListener("pointermove", mv); h.addEventListener("pointerup", up);
+                    });
+                });
+
+                el.addEventListener("animationend", function (e) { if (e.animationName === "winIn") el.classList.add("ready") });
+                try { w.api = a.open(w, arg) || {} }
+                catch (err) {
+                    w.api = {};
+                    w.body.innerHTML = '<div style="padding:24px"><b>This app crashed.</b><pre style="margin-top:10px;white-space:pre-wrap;color:var(--sub)">' + esc(err && err.message || err) + '</pre></div>';
+                }
+                bounceId = id;
+                focusWin(w);
+                return w;
+            }
+            function focusWin(w) {
+                zTop++; w.el.style.zIndex = zTop; active = w;
+                Object.keys(wins).forEach(function (k) { wins[k].el.classList.toggle("inactive", wins[k] !== w) });
+                renderShelf();
+            }
+            var RM = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+            function shelfPoint(id) {
+                var b = $('#shelf [data-app="' + id + '"]');
+                if (!b) return { x: innerWidth / 2, y: innerHeight };
+                var r = b.getBoundingClientRect();
+                return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+            }
+            function flyKeys(w) {
+                var r = w.el.getBoundingClientRect(), p = shelfPoint(w.id);
+                return [{ transform: "none", opacity: 1 },
+                { transform: "translate(" + (p.x - (r.left + r.width / 2)) + "px," + (p.y - (r.top + r.height / 2)) + "px) scale(.12)", opacity: 0 }];
+            }
+            function setMin(w, m) {
+                var el = w.el;
+                if (w.anim) { w.anim.cancel(); w.anim = null }
+                if (m) {
+                    w.min = true;
+                    if (RM) el.style.display = "none";
+                    else {
+                        w.anim = el.animate(flyKeys(w), { duration: 260, easing: "cubic-bezier(.4,0,.2,1)", fill: "forwards" });
+                        w.anim.onfinish = function () { if (w.min) el.style.display = "none" };
+                    }
+                    var ids = Object.keys(wins).filter(function (k) { return !wins[k].min });
+                    active = ids.length ? wins[ids[ids.length - 1]] : null;
+                    if (active) focusWin(active);
+                } else {
+                    w.min = false; el.style.display = "flex";
+                    if (!RM) { var k = flyKeys(w); w.anim = el.animate([k[1], k[0]], { duration: 260, easing: "cubic-bezier(.2,.8,.2,1)" }) }
+                    focusWin(w);
+                }
+                renderShelf();
+            }
+            function toggleMax(w) {
+                w.max = !w.max;
+                w.el.classList.add("anim");
+                w.el.classList.toggle("max", w.max);
+                setTimeout(function () { w.el.classList.remove("anim") }, 320);
+            }
+            function closeWin(w) {
+                w.closers.forEach(function (f) { try { f() } catch (e) { } });
+                var el = w.el; delete wins[w.id];
+                el.classList.add("closing"); setTimeout(function () { el.remove() }, 180);
+                if (active === w) active = null;
+                renderShelf();
+            }
+
+            /* ---------------- Shelf, launcher, quick settings ---------------- */
+            function shelfIds() {
+                var ids = APPS.filter(isPinned).map(function (a) { return a.id });
+                Object.keys(wins).forEach(function (k) { if (ids.indexOf(k) < 0 && APP[k]) ids.push(k) });
+                return ids;
+            }
+            function renderShelf() {
+                var sh = $("#shelf");
+                if (!$("#launchBtn", sh)) {
+                    sh.innerHTML = '<button class="sb" id="launchBtn" title="Launcher"><span class="ring"></span></button>' +
+                        '<div id="tray"><svg viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r=".8"/></svg>' +
+                        '<svg viewBox="0 0 24 24"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2"/></svg><span id="clock"></span></div>';
+                }
+                var tray = $("#tray", sh), want = shelfIds(), have = {};
+                Array.prototype.forEach.call(sh.querySelectorAll(".sb[data-app]:not(.leaving)"), function (b) { have[b.getAttribute("data-app")] = b });
+                Object.keys(have).forEach(function (id) {
+                    if (want.indexOf(id) < 0) { var b = have[id]; b.classList.add("leaving"); setTimeout(function () { b.remove() }, 220); delete have[id] }
+                });
+                want.forEach(function (id) {
+                    if (have[id]) return;
+                    var a = APP[id], b = document.createElement("button");
+                    b.className = "sb enter"; b.setAttribute("data-app", id); b.title = a.name;
+                    b.innerHTML = icHtml(a) + '<i class="run"></i>';
+                    sh.insertBefore(b, tray); have[id] = b;
+                    setTimeout(function () { b.classList.remove("enter") }, 420);
+                });
+                want.forEach(function (id, i) {
+                    var b = have[id], prev = i === 0 ? $("#launchBtn", sh) : have[want[i - 1]];
+                    if (b.previousElementSibling !== prev) sh.insertBefore(b, prev.nextSibling);
+                    var on = !!wins[id], act = on && active === wins[id] && !wins[id].min;
+                    b.classList.toggle("on", on); b.classList.toggle("act", act);
+                    if (bounceId === id) { b.classList.remove("bounce"); void b.offsetWidth; b.classList.add("bounce") }
+                });
+                bounceId = null;
+                tick();
+            }
+            $("#shelf").addEventListener("click", function (e) {
+                if (e.target.closest("#launchBtn")) { toggleLauncher(); return }
+                if (e.target.closest("#tray")) { toggleQS(); return }
+                var b = e.target.closest("[data-app]"); if (!b) return;
+                closePanels();
+                var id = b.getAttribute("data-app"), w = wins[id];
+                if (!w) openApp(id);
+                else if (w.min) setMin(w, false);
+                else if (active === w) setMin(w, true);
+                else focusWin(w);
+            });
+
+            function buildLauncher(filter) {
+                var f = (filter || "").toLowerCase();
+                $("#lgrid").innerHTML = APPS.filter(function (a) { return !f || a.name.toLowerCase().indexOf(f) > -1 }).map(function (a, i) {
+                    return '<button class="lapp" style="--i:' + i + '" data-app="' + esc(a.id) + '">' + icHtml(a) + '<span>' + esc(a.name) + '</span></button>';
+                }).join("");
+            }
+            function toggleLauncher() {
+                var open = !$("#launcher").classList.contains("open");
+                closePanels();
+                if (open) { $("#launcher").classList.add("open"); $("#lq").value = ""; $("#lgrid").classList.remove("noanim"); buildLauncher(); setTimeout(function () { $("#lq").focus() }, 30) }
+            }
+            function toggleQS() { var open = !$("#qs").classList.contains("open"); closePanels(); if (open) { $("#qs").classList.add("open"); tick() } }
+            function closePanels() { $("#launcher").classList.remove("open"); $("#qs").classList.remove("open") }
+            $("#lq").addEventListener("input", function (e) { $("#lgrid").classList.add("noanim"); buildLauncher(e.target.value) });
+            $("#lq").addEventListener("keydown", function (e) {
+                if (e.key === "Enter") { var f = $(".lapp"); if (f) { closePanels(); openApp(f.getAttribute("data-app")) } }
+            });
+            $("#lgrid").addEventListener("click", function (e) { var b = e.target.closest("[data-app]"); if (b) { closePanels(); openApp(b.getAttribute("data-app")) } });
+            document.addEventListener("pointerdown", function (e) {
+                if (!e.target.closest("#launcher,#qs,#shelf")) closePanels();
+            });
+            document.addEventListener("keydown", function (e) { if (e.key === "Escape") closePanels() });
+
+            $("#qs").addEventListener("click", function (e) {
+                var t = e.target.closest("[data-q]"); if (!t) return;
+                var k = t.getAttribute("data-q");
+                if (k === "dark") { cfg.theme = cfg.theme === "dark" ? "light" : "dark"; applyCfg() }
+                else t.classList.toggle("on");
+                if (k === "night") $("#wall").style.filter = t.classList.contains("on") ? "sepia(.35) saturate(.9)" : "";
+            });
+            $("#bright").addEventListener("input", function (e) { $("#dim").style.opacity = (+e.target.value) / 100 });
+
+            function tick() {
+                var d = new Date();
+                var c = $("#clock"); if (c) c.textContent = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+                var qt = $("#qtime"); if (qt) qt.textContent = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+                var qd = $("#qdate"); if (qd) qd.textContent = d.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+            }
+            setInterval(tick, 10000);
+            if (navigator.getBattery) navigator.getBattery().then(function (b) { $("#qbat").textContent = "Battery " + Math.round(b.level * 100) + "%" }).catch(function () { });
+
+            /* ---------------- Shared dialog ---------------- */
+            function ask(w, title, def, cb) {
+                var b = document.createElement("div"); b.className = "dlg-b";
+                b.innerHTML = '<div class="dlg"><h4>' + esc(title) + '</h4><input value="' + esc(def || "") + '"><div class="row"><button class="btn" data-x="0">Cancel</button><button class="btn fill" data-x="1">OK</button></div></div>';
+                w.body.appendChild(b);
+                var inp = $("input", b); inp.focus(); inp.select();
+                function done(ok) { var v = inp.value.trim(); b.remove(); if (ok && v) cb(v) }
+                b.addEventListener("click", function (e) { var x = e.target.closest("[data-x]"); if (x) done(x.getAttribute("data-x") === "1") });
+                inp.addEventListener("keydown", function (e) { if (e.key === "Enter") done(true); if (e.key === "Escape") done(false) });
+            }
+
+            /* ---------------- Newspedia ---------------- */
+            var FEEDS = {
+                top: ["Top stories", "https://feeds.bbci.co.uk/news/rss.xml"],
+                world: ["World", "https://feeds.bbci.co.uk/news/world/rss.xml"],
+                business: ["Business", "https://feeds.bbci.co.uk/news/business/rss.xml"],
+                tech: ["Technology", "https://feeds.bbci.co.uk/news/technology/rss.xml"],
+                science: ["Science", "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"],
+                health: ["Health", "https://feeds.bbci.co.uk/news/health/rss.xml"],
+                sport: ["Sport", "https://feeds.bbci.co.uk/sport/rss.xml"],
+                ent: ["Entertainment", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"]
+            };
+            function safeUrl(u) { return /^https?:\/\//i.test(u || "") ? u : "" }
+            function ago(ts) { var s = Math.max(0, (Date.now() - ts) / 1000); return s < 60 ? "just now" : s < 3600 ? Math.floor(s / 60) + "m ago" : s < 86400 ? Math.floor(s / 3600) + "h ago" : Math.floor(s / 86400) + "d ago" }
+            function viaJson(url) {
+                return fetch("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(url) + "&_=" + Date.now())
+                    .then(function (r) { if (!r.ok) throw 0; return r.json() })
+                    .then(function (j) {
+                        if (j.status !== "ok") throw 0;
+                        return j.items.map(function (it) {
+                            return {
+                                title: strip(it.title), desc: strip(it.description || it.content), link: safeUrl(it.link),
+                                img: safeUrl(it.thumbnail || (it.enclosure && it.enclosure.link) || ""), ts: Date.parse((it.pubDate || "").replace(" ", "T") + "Z") || Date.parse(it.pubDate) || Date.now()
+                            }
+                        });
+                    });
+            }
+            function viaXml(url) {
+                return fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url)).then(function (r) { if (!r.ok) throw 0; return r.text() })
+                    .then(function (t) {
+                        var nodes = new DOMParser().parseFromString(t, "text/xml").querySelectorAll("item");
+                        if (!nodes.length) throw 0;
+                        return Array.prototype.map.call(nodes, function (n) {
+                            var g = function (x) { var e = n.getElementsByTagName(x)[0]; return e ? e.textContent : "" };
+                            var th = n.getElementsByTagNameNS("*", "thumbnail")[0];
+                            return { title: strip(g("title")), desc: strip(g("description")), link: safeUrl(g("link")), img: safeUrl(th ? th.getAttribute("url") : ""), ts: Date.parse(g("pubDate")) || Date.now() };
+                        });
+                    });
+            }
+            function openNews(w) {
+                var root = w.body; root.classList.add("np");
+                var st = { cat: "top", items: [], q: "", t: null, ok: true };
+                root.innerHTML = '<div class="np-top"><div class="np-tabs"></div><input class="np-q" placeholder="Search" autocomplete="off">' +
+                    '<button class="np-r" title="Refresh"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg></button></div><div class="np-st"></div><div class="np-list"></div>';
+                var tabs = $(".np-tabs", root), list = $(".np-list", root), stat = $(".np-st", root), rb = $(".np-r", root);
+                function renderTabs() { tabs.innerHTML = Object.keys(FEEDS).map(function (k) { return '<button class="chip' + (st.cat === k ? " on" : "") + '" data-c="' + k + '">' + FEEDS[k][0] + '</button>' }).join("") }
+                function draw(anim) {
+                    list.classList.toggle("in", !!anim);
+                    var q = st.q.toLowerCase();
+                    var items = st.items.filter(function (i) { return !q || (i.title + " " + i.desc).toLowerCase().indexOf(q) > -1 });
+                    stat.textContent = st.t ? (st.ok ? "Updated " : "Offline, showing news from ") + ago(st.t) + " · BBC News" : (st.ok ? "Loading…" : "No connection");
+                    list.innerHTML = items.length ? items.map(function (i, n) {
+                        return '<div class="nc" style="--i:' + Math.min(n, 14) + '" data-n="' + n + '">' + (i.img ? '<div class="im"><img loading="lazy" referrerpolicy="no-referrer" src="' + esc(i.img) + '" alt="" onerror="this.parentNode.remove()"></div>' : "") +
+                            '<div class="bd"><div class="mt">' + ago(i.ts) + '</div><h4>' + esc(i.title) + '</h4><p>' + esc(i.desc) + '</p></div></div>';
+                    }).join("") : '<div class="np-empty">' + (st.items.length ? "No matches." : st.ok ? "Loading news…" : "Couldn't load news. Check your connection.") + '</div>';
+                    list.__items = items;
+                }
+                function refresh(anim) {
+                    var cat = st.cat; rb.classList.add("busy");
+                    viaJson(FEEDS[cat][1]).catch(function () { return viaXml(FEEDS[cat][1]) }).then(function (items) {
+                        if (cat !== st.cat) return;
+                        items.sort(function (a, b) { return b.ts - a.ts });
+                        st.items = items; st.t = Date.now(); st.ok = true; save("an_news_" + cat, { i: items, t: st.t });
+                    }).catch(function () {
+                        if (cat !== st.cat) return;
+                        st.ok = false;
+                        var c = load("an_news_" + cat, null); if (c && !st.items.length) { st.items = c.i; st.t = c.t }
+                    }).then(function () { rb.classList.remove("busy"); draw(anim === true) });
+                }
+                function setCat(k) {
+                    st.cat = k; st.q = ""; $(".np-q", root).value = "";
+                    var c = load("an_news_" + k, null); st.items = c ? c.i : []; st.t = c ? c.t : null;
+                    renderTabs(); draw(true); refresh(!st.items.length);
+                }
+                tabs.addEventListener("click", function (e) { var b = e.target.closest("[data-c]"); if (b) setCat(b.getAttribute("data-c")) });
+                list.addEventListener("click", function (e) { var c = e.target.closest("[data-n]"); if (!c) return; var it = list.__items[+c.getAttribute("data-n")]; if (it && it.link) window.open(it.link, "_blank", "noopener") });
+                $(".np-q", root).addEventListener("input", function (e) { st.q = e.target.value; draw() });
+                rb.addEventListener("click", function () { refresh(true) });
+                var i1 = setInterval(refresh, 300000), i2 = setInterval(draw, 60000);
+                w.closers.push(function () { clearInterval(i1); clearInterval(i2) });
+                setCat("top");
+            }
+
+            /* ---------------- MyOS media / MyApp file opener ---------------- */
+            function openMyOSFile(path) {
+                var item = FS[path]; if (!item || item.t !== "f") return;
+                var name = base(path), value = item.c || "", ext = (name.split(".").pop() || "").toLowerCase();
+                if (ext === "myapp") {
+                    try {
+                        var html = value.indexOf("data:") === 0 ? atob(value.split(",")[1]) : value;
+                        if (!/<html|<!doctype/i.test(html)) { toast(".myapp must contain an HTML app"); return; }
+                        openApp("myapp-viewer", { name: name, html: html }); return;
+                    } catch (err) { toast("Could not read MyApp file"); return; }
+                }
+                var mime = value.match(/^data:([^;,]+)/);
+                var url = value.indexOf("data:") === 0 ? value : URL.createObjectURL(new Blob([value], { type: mimeTypeFor(ext) }));
+                if (/^image\//.test(mime ? mime[1] : "") || /^(png|jpe?g|gif|webp|bmp|svg|avif)$/.test(ext)) openApp("media-viewer", { name: name, url: url, type: "image" });
+                else if (/^video\//.test(mime ? mime[1] : "") || /^(mp4|webm|ogv|mov|m4v)$/.test(ext)) openApp("media-viewer", { name: name, url: url, type: "video" });
+                else if (/^audio\//.test(mime ? mime[1] : "") || /^(mp3|wav|ogg|m4a|aac|flac)$/.test(ext)) openApp("media-viewer", { name: name, url: url, type: "audio" });
+                else if (ext === "pdf") openApp("media-viewer", { name: name, url: url, type: "pdf" });
+                else if (/^(html?|htm)$/.test(ext)) openApp("media-viewer", { name: name, html: value, url: url, type: "html" });
+                else openApp("text", path);
+            }
+            function mimeTypeFor(ext) { return ({ mp3: "audio/mpeg", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", mp4: "video/mp4", webm: "video/webm", pdf: "application/pdf" })[ext] || "application/octet-stream"; }
+
+            /* ---------------- Files ---------------- */
+            function openFiles(w, arg) {
+                var root = w.body, path = "/home/user", sel = null;
+                refreshFolderApps();
+                root.className = "wc fm";
+                root.innerHTML = '<div class="fm-bar"><button class="sbtn" data-a="up">↑ Up</button><div class="fm-path"></div>' +
+                    '<button class="sbtn" data-a="nf">New file</button><button class="sbtn" data-a="nd">New folder</button>' +
+                    '<button class="sbtn" data-a="upload">Upload files</button><input class="fm-upload" type="file" multiple style="display:none">' +
+                    '<button class="sbtn" data-a="import">Import app folder</button><input class="fm-import" type="file" webkitdirectory directory multiple style="display:none">' +
+                    '<button class="sbtn" data-a="edit" disabled>Edit</button><button class="sbtn" data-a="del" disabled>Delete</button></div><div class="fm-list"></div>';
+                var lst = $(".fm-list", root), pth = $(".fm-path", root), del = $('[data-a="del"]', root), edit = $('[data-a="edit"]', root);
+                var importInput = $(".fm-import", root);
+                var uploadInput = $(".fm-upload", root);
+                uploadInput.addEventListener("change", function () {
+                    var chosen = Array.prototype.slice.call(uploadInput.files || []);
+                    Promise.all(chosen.map(function (file) {
+                        return new Promise(function (resolve, reject) {
+                            var reader = new FileReader();
+                            reader.onload = function () { FS[join(path, file.name)] = { t: "f", c: String(reader.result || "") }; resolve(); };
+                            reader.onerror = reject;
+                            reader.readAsDataURL(file);
+                        });
+                    })).then(function () { saveFS(); draw(); uploadInput.value = ""; toast("Uploaded " + chosen.length + " file(s)"); })
+                        .catch(function () { toast("Upload failed. Browser storage may be full."); });
+                });
+                importInput.addEventListener("change", function () {
+                    var selected = Array.prototype.slice.call(importInput.files || []);
+                    if (!selected.length) return;
+                    var firstParts = (selected[0].webkitRelativePath || selected[0].name).split("/");
+                    var folderName = firstParts.length > 1 ? firstParts[0] : selected[0].name.replace(/\.[^.]+$/, "");
+                    folderName = folderName || "Imported App";
+                    var targetRoot = "/home/user/Apps/" + folderName;
+                    function ensureDir(p) { if (!FS[p]) FS[p] = { t: "d" }; }
+                    ensureDir("/home/user/Apps"); ensureDir(targetRoot);
+                    Promise.all(selected.map(function (file) {
+                        var rel = file.webkitRelativePath ? file.webkitRelativePath.split("/").slice(1).join("/") : file.name;
+                        if (!rel) return Promise.resolve();
+                        var bits = rel.split("/"), current = targetRoot;
+                        for (var i = 0; i < bits.length - 1; i++) { current += "/" + bits[i]; ensureDir(current); }
+                        var dest = current + "/" + bits[bits.length - 1];
+                        return new Promise(function (resolve, reject) {
+                            var ext = (file.name.split(".").pop() || "").toLowerCase();
+                            var textLike = /^(html?|css|js|mjs|cjs|json|txt|xml|svg|md|csv|webmanifest|map)$/.test(ext) ||
+                                /^text\//.test(file.type) || /javascript|json|xml/.test(file.type);
+                            if (textLike) {
+                                file.text().then(function (content) { FS[dest] = { t: "f", c: content }; resolve(); }, reject);
+                            } else {
+                                var reader = new FileReader();
+                                reader.onload = function () { FS[dest] = { t: "f", c: String(reader.result || "") }; resolve(); };
+                                reader.onerror = reject;
+                                reader.readAsDataURL(file);
+                            }
+                        });
+                    })).then(function () {
+                        saveFS(); refreshFolderApps(); path = "/home/user/Apps"; draw(); importInput.value = "";
+                    }).catch(function (err) { alert("Could not import app folder: " + err.message); });
+                });
+                var FOLDER = '<svg viewBox="0 0 24 24">' + G.files + '</svg>', FILE = '<svg viewBox="0 0 24 24">' + G.text + '</svg>';
+                function draw() {
+                    pth.textContent = path; sel = null; del.disabled = true; edit.disabled = true;
+                    var k = kids(path);
+                    lst.innerHTML = k.length ? k.map(function (p, i) {
+                        var d = FS[p].t === "d";
+                        return '<div class="fr' + (d ? " d" : "") + '" style="--i:' + Math.min(i, 12) + '" data-p="' + esc(p) + '">' + (d ? FOLDER : FILE) + '<span class="n">' + esc(base(p)) + '</span><span class="s">' + (d ? "Folder" : bytes((FS[p].c || "").length)) + '</span></div>';
+                    }).join("") : '<div style="padding:40px;text-align:center;color:var(--sub)">This folder is empty</div>';
+                }
+                lst.addEventListener("click", function (e) {
+                    var r = e.target.closest(".fr"); if (!r) return;
+                    lst.querySelectorAll(".sel").forEach(function (x) { x.classList.remove("sel") });
+                    r.classList.add("sel"); sel = r.getAttribute("data-p"); del.disabled = false; edit.disabled = !(FS[sel] && FS[sel].t === "f");
+                });
+                lst.addEventListener("dblclick", function (e) {
+                    var r = e.target.closest(".fr"); if (!r) return;
+                    var p = r.getAttribute("data-p");
+                    if (FS[p].t === "d") { path = p; draw(); refreshFolderApps() }
+                    else {
+                        var appRoot = "/home/user/Apps/";
+                        if (p.indexOf(appRoot) === 0) {
+                            var appFolder = p.slice(0, p.indexOf("/", appRoot.length));
+                            var def = folderAppDefinition(appFolder);
+                            if (def) { registerHtmlApp(def); openApp(def.id) } else openApp("text", p);
+                        } else openMyOSFile(p);
+                    }
+                });
+                root.addEventListener("click", function (e) {
+                    var b = e.target.closest("[data-a]"); if (!b) return;
+                    var a = b.getAttribute("data-a");
+                    if (a === "up") { path = dirOf(path); draw() }
+                    if (a === "nf") ask(w, "New file", "index.html", function (n) { var p = join(path, n); if (!FS[p]) { FS[p] = { t: "f", c: "" }; saveFS() } refreshFolderApps(); draw() });
+                    if (a === "nd") ask(w, "New folder", "New folder", function (n) { var p = join(path, n); if (!FS[p]) { FS[p] = { t: "d" }; saveFS() } refreshFolderApps(); draw() });
+                    if (a === "import") { importInput.click() }
+                    if (a === "upload") { uploadInput.click() }
+                    if (a === "edit" && sel && FS[sel] && FS[sel].t === "f") { openApp("text", sel) }
+                    if (a === "del" && sel) { rmTree(sel); refreshFolderApps(); draw() }
+                });
+                draw();
+                return { load: function (p) { if (p && FS[p] && FS[p].t === "d") { path = p; draw() } } };
+            }
+
+            /* ---------------- Text editor ---------------- */
+            function openText(w, arg) {
+                var root = w.body, cur = null, dirty = false;
+                root.className = "wc tx";
+                root.innerHTML = '<div class="fm-bar"><span class="fm-path" id="tp">Untitled</span><button class="sbtn" data-a="s">Save</button></div><textarea spellcheck="false"></textarea>';
+                var ta = $("textarea", root), tp = $(".fm-path", root);
+                function title() { tp.textContent = (cur ? cur : "Untitled") + (dirty ? " •" : ""); w.setTitle((cur ? base(cur) : "Text") + (dirty ? " •" : "")) }
+                function loadFile(p) {
+                    if (p && FS[p] && FS[p].t === "f") { cur = p; ta.value = FS[p].c || ""; dirty = false; title() }
+                }
+                function doSave() {
+                    if (cur) { FS[cur].c = ta.value; saveFS(); dirty = false; title() }
+                    else ask(w, "Save as", "note.txt", function (n) { var p = join("/home/user/Documents", n); FS[p] = { t: "f", c: ta.value }; saveFS(); cur = p; dirty = false; title() });
+                }
+                ta.addEventListener("input", function () { dirty = true; title() });
+                ta.addEventListener("keydown", function (e) {
+                    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); doSave() }
+                    if (e.key === "Tab") { e.preventDefault(); var s = ta.selectionStart; ta.value = ta.value.slice(0, s) + "  " + ta.value.slice(ta.selectionEnd); ta.selectionStart = ta.selectionEnd = s + 2; dirty = true; title() }
+                });
+                root.addEventListener("click", function (e) { if (e.target.closest('[data-a="s"]')) doSave() });
+                loadFile(arg); title();
+                return { load: loadFile };
+            }
+
+            /* ---------------- Terminal ---------------- */
+            function openTerm(w) {
+                var root = w.body, cwd = "/home/user", hist = [], hi = 0;
+                root.className = "wc tm";
+                root.innerHTML = '<div class="out"></div><div class="in"><span class="pr"></span><input spellcheck="false" autocomplete="off"></div>';
+                var out = $(".out", root), inp = $("input", root), pr = $(".pr", root);
+                function prompt_() { pr.textContent = "user@MyOS:" + (cwd === "/home/user" ? "~" : cwd) + "$" }
+                function print(t) { var d = document.createElement("div"); d.className = "ln"; d.textContent = t; out.appendChild(d) }
+                print("MyOS terminal. Type 'help' for a list of commands.");
+                prompt_();
+                var cmds = {
+                    help: function () { print("help  ls  cd  pwd  cat  echo  mkdir  touch  rm  clear  date  whoami  neofetch  open <app>  debug") },
+                    debug: function () {
+                        print("========== MyOS DEBUG ==========");
+                        print("Viewport: " + innerWidth + " x " + innerHeight);
+                        print("Device pixel ratio: " + devicePixelRatio);
+                        print("Apps registered: " + APPS.length);
+                        print("Virtual files: " + Object.keys(FS).length);
+                        print("Storage estimate: " + bytes(JSON.stringify(FS).length));
+                        print("Online: " + navigator.onLine);
+                        print("FPS: " + (window.__myosFPS || "Measuring..."));
+                        print("JS heap: " + (performance.memory ? bytes(performance.memory.usedJSHeapSize) : "Not exposed by this browser"));
+                        print("================================");
+                    },
+                    pwd: function () { print(cwd) },
+                    whoami: function () { print("user") },
+                    date: function () { print(new Date().toString()) },
+                    clear: function () { out.innerHTML = "" },
+                    echo: function (a) { print(a.join(" ")) },
+                    ls: function (a) {
+                        var p = resolve(cwd, a[0]); if (!FS[p]) return print("ls: " + (a[0] || p) + ": No such file or directory"); if (FS[p].t === "f") return print(base(p));
+                        print(kids(p).map(function (k) { return base(k) + (FS[k].t === "d" ? "/" : "") }).join("  "))
+                    },
+                    cd: function (a) { var p = resolve(cwd, a[0] || "~"); if (!FS[p] || FS[p].t !== "d") return print("cd: " + (a[0] || p) + ": Not a directory"); cwd = p; prompt_() },
+                    cat: function (a) { var p = resolve(cwd, a[0]); if (!FS[p] || FS[p].t !== "f") return print("cat: " + (a[0] || "") + ": No such file"); print(FS[p].c || "") },
+                    mkdir: function (a) { if (!a[0]) return print("mkdir: missing operand"); var p = resolve(cwd, a[0]); if (FS[p]) return print("mkdir: " + a[0] + ": File exists"); if (!FS[dirOf(p)]) return print("mkdir: parent does not exist"); FS[p] = { t: "d" }; saveFS() },
+                    touch: function (a) { if (!a[0]) return print("touch: missing operand"); var p = resolve(cwd, a[0]); if (!FS[p]) { if (!FS[dirOf(p)]) return print("touch: parent does not exist"); FS[p] = { t: "f", c: "" }; saveFS() } },
+                    rm: function (a) { var p = resolve(cwd, a[0]); if (!FS[p] || p === "/") return print("rm: cannot remove '" + (a[0] || "") + "'"); rmTree(p) },
+                    open: function (a) { var n = (a[0] || "").toLowerCase(); var m = APPS.filter(function (x) { return x.id === n || x.name.toLowerCase() === n })[0]; if (!m) return print("open: unknown app '" + (a[0] || "") + "'"); openApp(m.id) },
+                    neofetch: function () {
+                        print("user@MyOS\n----------\nOS:       MyOS (browser)\nShell:    MyOS-sh\nWM:       MyOS Shelf\nBrowser:  " + (navigator.userAgent.match(/(Firefox|Edg|Chrome|Safari)\/[\d.]+/) || ["unknown"])[0] +
+                            "\nScreen:   " + innerWidth + "x" + innerHeight + "\nApps:     " + APPS.length)
+                    }
+                };
+                inp.addEventListener("keydown", function (e) {
+                    if (e.key === "Enter") {
+                        var line = inp.value; inp.value = "";
+                        print(pr.textContent + " " + line);
+                        var parts = line.trim().split(/\s+/).filter(Boolean);
+                        if (parts.length) { hist.push(line); hi = hist.length; var c = cmds[parts[0]]; if (c) c(parts.slice(1)); else print(parts[0] + ": command not found") }
+                        root.scrollTop = root.scrollHeight;
+                    } else if (e.key === "ArrowUp") { e.preventDefault(); if (hi > 0) { hi--; inp.value = hist[hi] } }
+                    else if (e.key === "ArrowDown") { e.preventDefault(); if (hi < hist.length - 1) { hi++; inp.value = hist[hi] } else { hi = hist.length; inp.value = "" } }
+                    else if (e.key.toLowerCase() === "l" && e.ctrlKey) { e.preventDefault(); out.innerHTML = "" }
+                });
+                root.addEventListener("click", function (e) { if (!window.getSelection().toString()) inp.focus() });
+                setTimeout(function () { inp.focus() }, 50);
+                return {};
+            }
+
+            /* ---------------- Settings ---------------- */
+            function openSettings(w) {
+                var root = w.body, sec = "app";
+                root.className = "wc st";
+                function draw() {
+                    var main = "";
+                    if (sec === "app") {
+                        main = '<h3>Appearance</h3><h5>Theme</h5><div class="seg"><button data-t="light" class="' + (cfg.theme === "light" ? "on" : "") + '">Light</button><button data-t="dark" class="' + (cfg.theme === "dark" ? "on" : "") + '">Dark</button></div>' +
+                            '<h5>Wallpaper</h5><div class="walls">' + Object.keys(WALLS).map(function (k) { return '<button data-w="' + k + '" class="' + (cfg.wall === k ? "on" : "") + '" style="background-image:' + WALLS[k].replace(/"/g, "&quot;") + '" title="' + k + '"></button>' }).join("") + '</div>' +
+                            '<h5>Custom cursor</h5><div class="seg cursor-options">' +
+                            [["default", "Default"], ["pointer", "Pointer"], ["crosshair", "Crosshair"], ["grab", "Grab"], ["help", "Help"], ["text", "Text"], ["cell", "Cell"], ["wait", "Wait"], ["notAllowed", "Not allowed"], ["pencil", "Pencil"], ["neon", "Neon"]].map(function (c) { return '<button data-cursor="' + c[0] + '" class="' + ((cfg.cursor || "default") === c[0] ? "on" : "") + '">' + c[1] + '</button>' }).join("") +
+                            '</div><p class="hint">Choose a cursor style. Your selection is saved on this device.</p>';
+                    } else if (sec === "apps") {
+                        main = '<h3>Apps</h3>' + APPS.map(function (a) {
+                            return '<div class="arow">' + icHtml(a) + '<span class="an">' + esc(a.name) + (a.custom ? '<small>Web app</small>' : '') + '</span>' +
+                                '<label class="sw"><input type="checkbox" data-pin="' + esc(a.id) + '"' + (isPinned(a) ? " checked" : "") + '> Pin to shelf</label>' +
+                                (a.custom ? '<button class="btn" data-rm="' + esc(a.id) + '">Uninstall</button>' : '') + '</div>';
+                        }).join("") +
+                            '<h5>Add a web app</h5><div class="addrow"><input id="wa-n" placeholder="Name" autocomplete="off"><input id="wa-u" placeholder="https://example.com" autocomplete="off"><button class="btn fill" data-add="1">Add</button></div>' +
+                            '<p class="hint">Use the App Store to install apps or create multi-file HTML apps. Some sites refuse to be shown inside another page and will appear blank. Use "Open in new tab" in the app window for those. To build an app with code, find <b>ADD YOUR APPS HERE</b> in this file.</p>';
+                    } else if (sec === "wisp") {
+                        var wisp = load("an_wisp_url", "wss://anura.pro");
+                        var presets = ["wss://anura.pro", "wss://wisp.mercurywork.shop/", "wss://truffled.lol", "wss://daydreamx.pro", "wss://gointospace.app"];
+                        var isPreset = presets.indexOf(wisp) >= 0;
+                        main = '<h3>WISP Proxy</h3><p class="hint">Choose a WISP WebSocket server or enter your own endpoint. MyBrowser and MyMusic use this shared WISP server through Scramjet when MyOS is hosted on GitHub Pages.</p><label style="display:block;margin:12px 0 6px">Server</label><select id="wisp-preset" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--win);color:var(--text)">' + presets.map(function (u) { return '<option value="' + u + '" ' + (wisp === u ? 'selected' : '') + '>' + u + '</option>'; }).join("") + '<option value="custom" ' + (!isPreset ? 'selected' : '') + '>Custom server…</option></select><input id="wisp-custom" placeholder="wss://your-wisp-server/" style="display:' + (!isPreset ? 'block' : 'none') + ';width:100%;box-sizing:border-box;margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--win);color:var(--text)" value="' + (!isPreset ? esc(wisp) : '') + '"><button class="btn fill" data-wisp-save style="margin-top:12px">Save WISP Server</button><p class="hint">Note: WISP servers use WebSocket (wss://). Scramjet routes browser frames through this server. The Scramjet runtime and service worker are deployed alongside MyOS by the included GitHub Actions workflow.</p>';
+                    } else if (sec === "dev") {
+                        main = '<h3>Device</h3><div class="kv"><span>Name</span><span>MyOS-web</span><span>Screen</span><span>' + innerWidth + ' × ' + innerHeight + '</span><span>Storage</span><span>' + bytes(JSON.stringify(FS).length) + ' used in browser</span><span>Language</span><span>' + esc(navigator.language) + '</span></div>' +
+                            '<h5>Reset</h5><button class="btn fill" data-r="1">Erase files and settings</button>';
+                    } else {
+                        main = '<h3>About</h3><div class="kv"><span>Version</span><span>MyOS OS Template 1.0</span><span>Apps</span><span>' + APPS.map(function (a) { return a.name }).join(", ") + '</span><span>Storage</span><span>Browser localStorage</span></div>' +
+                            '<p style="margin-top:20px;color:var(--sub);font-size:13px;line-height:1.5">MyOS is a customizable browser-based OS template. Use it as a starting point to build and brand your own web desktop.</p>';
+                    }
+                    root.innerHTML = '<div class="st-nav">' + [["app", "Appearance"], ["apps", "Apps"], ["wisp", "WISP"], ["dev", "Device"], ["about", "About"]].map(function (s) { return '<button data-s="' + s[0] + '" class="' + (sec === s[0] ? "on" : "") + '">' + s[1] + '</button>' }).join("") + '</div><div class="st-main">' + main + '</div>';
+                }
+                root.addEventListener("click", function (e) {
+                    var t;
+                    if ((t = e.target.closest("[data-s]"))) { sec = t.getAttribute("data-s"); draw() }
+                    else if ((t = e.target.closest("[data-t]"))) { cfg.theme = t.getAttribute("data-t"); applyCfg(); draw() }
+                    else if ((t = e.target.closest("[data-w]"))) { cfg.wall = t.getAttribute("data-w"); applyCfg(); draw() }
+                    else if ((t = e.target.closest("[data-cursor]"))) { cfg.cursor = t.getAttribute("data-cursor"); applyCfg(); draw() }
+                    else if (e.target.closest("[data-wisp-save]")) {
+                        var choice = $("#wisp-preset", root).value;
+                        var wu = choice === "custom" ? $("#wisp-custom", root).value.trim() : choice;
+                        if (!/^wss:\/\//i.test(wu)) toast("Enter a valid WISP WebSocket address beginning with wss://");
+                        else { save("an_wisp_url", wu); toast("WISP server saved"); draw(); }
+                    }
+                    else if (e.target.closest("[data-add]")) {
+                        var def = addWebApp($("#wa-n", root).value, $("#wa-u", root).value);
+                        if (def) { toast(def.name + " added to the shelf"); draw() } else toast("Enter a name and a valid web address");
+                    }
+                    else if ((t = e.target.closest("[data-rm]"))) { var rid = t.getAttribute("data-rm"); if (rid.indexOf("html-") === 0 || htmlApps.some(function (x) { return x.id === rid })) uninstallHtmlApp(rid); else removeWebApp(rid); draw(); toast("App uninstalled") }
+                    else if (e.target.closest("[data-r]")) { try { localStorage.clear() } catch (x) { } location.reload() }
+                });
+                root.addEventListener("change", function (e) {
+                    if (e.target && e.target.id === "wisp-preset") { var custom = $("#wisp-custom", root); if (custom) custom.style.display = e.target.value === "custom" ? "block" : "none"; }
+                    var t = e.target.closest("[data-pin]"); if (t) setPinned(t.getAttribute("data-pin"), t.checked);
+                });
+                draw();
+                return {};
+            }
+
+            /* MyOS FPS monitor */
+            (function () {
+                var last = performance.now(), frames = 0;
+                function tick(now) { frames++; if (now - last >= 1000) { window.__myosFPS = Math.round(frames * 1000 / (now - last)); frames = 0; last = now; } requestAnimationFrame(tick); }
+                requestAnimationFrame(tick);
+            })();
+
+            /* ---------------- Boot ---------------- */
+            bootDebug("Applying settings...");
+            cfg = cfg || load("an_cfg", {
+                theme: "light",
+                wall: "dunes",
+                cursor: "default"
+            }) || {
+                theme: "light",
+                wall: "dunes",
+                cursor: "default"
+            };
+
+            applyCfg();
+
+            bootDebug("Preparing desktop...");
+            booted = true;
+
+            bootDebug("Rendering shelf...");
+            renderShelf();
+
+            bootDebug("Building launcher...");
+            buildLauncher();
+
+            bootDebug("Opening desktop...");
+            setTimeout(function () {
+                $("#boot").classList.add("gone");
+                setTimeout(function () {
+                    $("#boot").remove();
+                }, 700);
+
+                openApp("news");
+            }, 1800);
+        })();
+    </script>
+</body>
+</html>
